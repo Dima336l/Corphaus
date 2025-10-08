@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { MainLayout } from './layouts/MainLayout';
@@ -20,7 +20,7 @@ import { ContactPage } from './pages/ContactPage';
 
 function App() {
   return (
-    <Router basename="/Corphaus">
+    <Router>
       <AuthProvider>
         <Routes>
           {/* Public routes with layout */}
