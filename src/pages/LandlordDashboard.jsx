@@ -4,38 +4,61 @@ import { useAuth } from '../contexts/AuthContext';
 import { PropertyCard } from '../components/PropertyCard';
 import { WantedAdCard } from '../components/WantedAdCard';
 import { Plus, Home, Briefcase, TrendingUp, Eye } from 'lucide-react';
+import { propertiesAPI, wantedAdsAPI } from '../utils/api';
 
 export const LandlordDashboard = () => {
   const { user, isPaid } = useAuth();
   const [myProperties, setMyProperties] = useState([]);
   const [matchingAds, setMatchingAds] = useState([]);
   const [activeTab, setActiveTab] = useState('properties'); // 'properties' or 'matches'
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Load user's properties
-    const allProperties = JSON.parse(localStorage.getItem('corphaus_properties') || '[]');
-    const userProperties = allProperties.filter((p) => p.userId === user?.id);
-    setMyProperties(userProperties);
+    const fetchData = async () => {
+      if (!user?.id && !user?._id) return;
+      
+      try {
+        setLoading(true);
+        
+        // Fetch user's properties from API
+        const propertiesResponse = await propertiesAPI.getMyListings(user.id || user._id);
+        const userProperties = propertiesResponse.data || [];
+        setMyProperties(userProperties);
 
-    // Load matching wanted ads (simple matching based on business models)
-    const allAds = JSON.parse(localStorage.getItem('corphaus_wanted_ads') || '[]');
-    const matches = allAds.filter((ad) => {
-      return userProperties.some((prop) => 
-        prop.businessModels?.includes(ad.businessType)
-      );
-    });
-    setMatchingAds(matches);
+        // Fetch all wanted ads and filter for matches
+        const adsResponse = await wantedAdsAPI.getAll();
+        const allAds = adsResponse.data || [];
+        
+        // Match wanted ads based on business models
+        const matches = allAds.filter((ad) => {
+          return userProperties.some((prop) => 
+            prop.businessModels?.includes(ad.businessType)
+          );
+        });
+        setMatchingAds(matches);
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
   }, [user]);
 
-  const handleDelete = (propertyId) => {
+  const handleDelete = async (propertyId) => {
     if (!window.confirm('Are you sure you want to delete this property listing?')) {
       return;
     }
 
-    const allProperties = JSON.parse(localStorage.getItem('corphaus_properties') || '[]');
-    const updated = allProperties.filter((p) => p.id !== propertyId);
-    localStorage.setItem('corphaus_properties', JSON.stringify(updated));
-    setMyProperties(myProperties.filter((p) => p.id !== propertyId));
+    try {
+      await propertiesAPI.delete(propertyId, user.id || user._id);
+      setMyProperties(myProperties.filter((p) => p._id !== propertyId));
+      alert('Property deleted successfully!');
+    } catch (error) {
+      console.error('Error deleting property:', error);
+      alert('Failed to delete property. Please try again.');
+    }
   };
 
   return (
@@ -147,7 +170,12 @@ export const LandlordDashboard = () => {
         </div>
 
         {/* Content */}
-        {activeTab === 'properties' && (
+        {loading ? (
+          <div className="text-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
+            <p className="text-gray-500 mt-4">Loading your dashboard...</p>
+          </div>
+        ) : activeTab === 'properties' && (
           <div>
             {myProperties.length === 0 ? (
               <div className="text-center py-12 bg-white rounded-2xl">
@@ -166,20 +194,20 @@ export const LandlordDashboard = () => {
             ) : (
               <div className="space-y-4">
                 {myProperties.map((property) => (
-                  <div key={property.id} className="bg-white rounded-lg shadow-md p-4 flex items-start gap-4">
+                  <div key={property._id} className="bg-white rounded-lg shadow-md p-4 flex items-start gap-4">
                     <div className="flex-1">
                       <PropertyCard property={property} />
                     </div>
                     <div className="flex flex-col gap-2">
                       <Link
-                        to={`/properties/${property.id}`}
+                        to={`/properties/${property._id}`}
                         className="btn-secondary text-sm flex items-center space-x-1"
                       >
                         <Eye className="w-4 h-4" />
                         <span>View</span>
                       </Link>
                       <button
-                        onClick={() => handleDelete(property.id)}
+                        onClick={() => handleDelete(property._id)}
                         className="text-sm text-red-600 hover:text-red-700 font-medium px-4 py-2 rounded-lg border border-red-200 hover:bg-red-50 transition-colors"
                       >
                         Delete
@@ -207,7 +235,7 @@ export const LandlordDashboard = () => {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {matchingAds.map((ad) => (
-                  <WantedAdCard key={ad.id} ad={ad} />
+                  <WantedAdCard key={ad._id} ad={ad} />
                 ))}
               </div>
             )}

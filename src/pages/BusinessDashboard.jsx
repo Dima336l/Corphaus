@@ -4,38 +4,61 @@ import { useAuth } from '../contexts/AuthContext';
 import { PropertyCard } from '../components/PropertyCard';
 import { WantedAdCard } from '../components/WantedAdCard';
 import { Plus, Briefcase, Home, TrendingUp, Eye } from 'lucide-react';
+import { wantedAdsAPI, propertiesAPI } from '../utils/api';
 
 export const BusinessDashboard = () => {
   const { user, isPaid } = useAuth();
   const [myAds, setMyAds] = useState([]);
   const [matchingProperties, setMatchingProperties] = useState([]);
   const [activeTab, setActiveTab] = useState('ads'); // 'ads' or 'matches'
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Load user's wanted ads
-    const allAds = JSON.parse(localStorage.getItem('corphaus_wanted_ads') || '[]');
-    const userAds = allAds.filter((ad) => ad.userId === user?.id);
-    setMyAds(userAds);
+    const fetchData = async () => {
+      if (!user?.id && !user?._id) return;
+      
+      try {
+        setLoading(true);
+        
+        // Fetch user's wanted ads from API
+        const adsResponse = await wantedAdsAPI.getMyListings(user.id || user._id);
+        const userAds = adsResponse.data || [];
+        setMyAds(userAds);
 
-    // Load matching properties (simple matching based on business type)
-    const allProperties = JSON.parse(localStorage.getItem('corphaus_properties') || '[]');
-    const matches = allProperties.filter((property) => {
-      return userAds.some((ad) => 
-        property.businessModels?.includes(ad.businessType)
-      );
-    });
-    setMatchingProperties(matches);
+        // Fetch all properties and filter for matches
+        const propertiesResponse = await propertiesAPI.getAll();
+        const allProperties = propertiesResponse.data || [];
+        
+        // Match properties based on business type
+        const matches = allProperties.filter((property) => {
+          return userAds.some((ad) => 
+            property.businessModels?.includes(ad.businessType)
+          );
+        });
+        setMatchingProperties(matches);
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
   }, [user]);
 
-  const handleDelete = (adId) => {
+  const handleDelete = async (adId) => {
     if (!window.confirm('Are you sure you want to delete this wanted ad?')) {
       return;
     }
 
-    const allAds = JSON.parse(localStorage.getItem('corphaus_wanted_ads') || '[]');
-    const updated = allAds.filter((ad) => ad.id !== adId);
-    localStorage.setItem('corphaus_wanted_ads', JSON.stringify(updated));
-    setMyAds(myAds.filter((ad) => ad.id !== adId));
+    try {
+      await wantedAdsAPI.delete(adId, user.id || user._id);
+      setMyAds(myAds.filter((ad) => ad._id !== adId));
+      alert('Wanted ad deleted successfully!');
+    } catch (error) {
+      console.error('Error deleting wanted ad:', error);
+      alert('Failed to delete wanted ad. Please try again.');
+    }
   };
 
   return (
@@ -147,7 +170,12 @@ export const BusinessDashboard = () => {
         </div>
 
         {/* Content */}
-        {activeTab === 'ads' && (
+        {loading ? (
+          <div className="text-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
+            <p className="text-gray-500 mt-4">Loading your dashboard...</p>
+          </div>
+        ) : activeTab === 'ads' && (
           <div>
             {myAds.length === 0 ? (
               <div className="text-center py-12 bg-white rounded-2xl">
@@ -166,20 +194,20 @@ export const BusinessDashboard = () => {
             ) : (
               <div className="space-y-4">
                 {myAds.map((ad) => (
-                  <div key={ad.id} className="bg-white rounded-lg shadow-md p-4 flex items-start gap-4">
+                  <div key={ad._id} className="bg-white rounded-lg shadow-md p-4 flex items-start gap-4">
                     <div className="flex-1">
                       <WantedAdCard ad={ad} />
                     </div>
                     <div className="flex flex-col gap-2">
                       <Link
-                        to={`/wanted-ads/${ad.id}`}
+                        to={`/wanted-ads/${ad._id}`}
                         className="btn-secondary text-sm flex items-center space-x-1"
                       >
                         <Eye className="w-4 h-4" />
                         <span>View</span>
                       </Link>
                       <button
-                        onClick={() => handleDelete(ad.id)}
+                        onClick={() => handleDelete(ad._id)}
                         className="text-sm text-red-600 hover:text-red-700 font-medium px-4 py-2 rounded-lg border border-red-200 hover:bg-red-50 transition-colors"
                       >
                         Delete
@@ -210,7 +238,7 @@ export const BusinessDashboard = () => {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {matchingProperties.map((property) => (
-                  <PropertyCard key={property.id} property={property} />
+                  <PropertyCard key={property._id} property={property} />
                 ))}
               </div>
             )}
