@@ -2,10 +2,12 @@ import { useState, useEffect } from 'react';
 import { PropertyCard } from '../components/PropertyCard';
 import { Search, SlidersHorizontal, Grid, List } from 'lucide-react';
 import { propertyTypes, businessModels, bedroomOptions } from '../data/formOptions';
+import { propertiesAPI } from '../utils/api';
 
 export const PropertiesPage = () => {
   const [properties, setProperties] = useState([]);
-  const [filteredProperties, setFilteredProperties] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
   const [showFilters, setShowFilters] = useState(true);
   const [filters, setFilters] = useState({
@@ -19,52 +21,33 @@ export const PropertiesPage = () => {
   });
 
   useEffect(() => {
-    // Load properties from localStorage
-    const storedProperties = JSON.parse(localStorage.getItem('corphaus_properties') || '[]');
-    setProperties(storedProperties);
-    setFilteredProperties(storedProperties);
-  }, []);
+    // Fetch properties from API
+    const fetchProperties = async () => {
+      try {
+        setLoading(true);
+        const apiFilters = {};
+        
+        if (filters.propertyType) apiFilters.propertyType = filters.propertyType;
+        if (filters.minBedrooms > 0) apiFilters.minBedrooms = filters.minBedrooms;
+        if (filters.businessModel) apiFilters.businessModel = filters.businessModel;
+        if (filters.hasParking) apiFilters.hasParking = 'true';
+        if (filters.wheelchairAccessible) apiFilters.wheelchairAccessible = 'true';
+        if (filters.furnished) apiFilters.furnished = 'true';
+        if (filters.search) apiFilters.postcode = filters.search;
+        
+        const response = await propertiesAPI.getAll(apiFilters);
+        setProperties(response.data || []);
+        setError(null);
+      } catch (err) {
+        console.error('Error fetching properties:', err);
+        setError('Failed to load properties. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  useEffect(() => {
-    // Apply filters
-    let filtered = properties;
-
-    if (filters.search) {
-      filtered = filtered.filter(
-        (p) =>
-          p.streetAddress?.toLowerCase().includes(filters.search.toLowerCase()) ||
-          p.postcode?.toLowerCase().includes(filters.search.toLowerCase())
-      );
-    }
-
-    if (filters.propertyType) {
-      filtered = filtered.filter((p) => p.propertyType === filters.propertyType);
-    }
-
-    if (filters.minBedrooms > 0) {
-      filtered = filtered.filter((p) => p.bedrooms >= filters.minBedrooms);
-    }
-
-    if (filters.businessModel) {
-      filtered = filtered.filter((p) =>
-        p.businessModels?.includes(filters.businessModel)
-      );
-    }
-
-    if (filters.hasParking) {
-      filtered = filtered.filter((p) => p.hasParking);
-    }
-
-    if (filters.wheelchairAccessible) {
-      filtered = filtered.filter((p) => p.wheelchairAccessible);
-    }
-
-    if (filters.furnished) {
-      filtered = filtered.filter((p) => p.furnished);
-    }
-
-    setFilteredProperties(filtered);
-  }, [filters, properties]);
+    fetchProperties();
+  }, [filters]);
 
   const handleFilterChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -239,8 +222,8 @@ export const PropertiesPage = () => {
             {/* Results Header */}
             <div className="flex items-center justify-between mb-6">
               <p className="text-gray-600">
-                <span className="font-semibold text-gray-900">{filteredProperties.length}</span>{' '}
-                {filteredProperties.length === 1 ? 'property' : 'properties'} found
+                <span className="font-semibold text-gray-900">{properties.length}</span>{' '}
+                {properties.length === 1 ? 'property' : 'properties'} found
               </p>
               <div className="flex items-center space-x-2">
                 <button
@@ -267,7 +250,19 @@ export const PropertiesPage = () => {
             </div>
 
             {/* Property Grid/List */}
-            {filteredProperties.length === 0 ? (
+            {loading ? (
+              <div className="text-center py-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
+                <p className="text-gray-500 mt-4">Loading properties...</p>
+              </div>
+            ) : error ? (
+              <div className="text-center py-12">
+                <p className="text-red-600 text-lg mb-4">{error}</p>
+                <button onClick={() => window.location.reload()} className="btn-primary">
+                  Retry
+                </button>
+              </div>
+            ) : properties.length === 0 ? (
               <div className="text-center py-12">
                 <p className="text-gray-500 text-lg">No properties found matching your criteria</p>
                 <button onClick={clearFilters} className="btn-primary mt-4">
@@ -282,8 +277,8 @@ export const PropertiesPage = () => {
                     : 'space-y-4'
                 }
               >
-                {filteredProperties.map((property) => (
-                  <PropertyCard key={property.id} property={property} />
+                {properties.map((property) => (
+                  <PropertyCard key={property._id} property={property} />
                 ))}
               </div>
             )}

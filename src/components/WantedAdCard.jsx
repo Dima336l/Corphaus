@@ -4,7 +4,7 @@ import { MapPin, Briefcase, DollarSign, Calendar } from 'lucide-react';
 export const WantedAdCard = ({ ad }) => {
   return (
     <Link
-      to={`/wanted-ads/${ad.id}`}
+      to={`/wanted-ads/${ad._id || ad.id}`}
       className="card block hover:scale-[1.02] transition-transform"
     >
       <div className="flex items-start justify-between mb-3">

@@ -4,7 +4,7 @@ import { MapPin, Bed, Bath, Home, CheckCircle } from 'lucide-react';
 export const PropertyCard = ({ property }) => {
   return (
     <Link
-      to={`/properties/${property.id}`}
+      to={`/properties/${property._id || property.id}`}
       className="card block hover:scale-[1.02] transition-transform"
     >
       <div className="aspect-video bg-gradient-to-br from-primary-100 to-primary-200 rounded-lg mb-4 flex items-center justify-center">
