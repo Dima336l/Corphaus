@@ -11,11 +11,17 @@ Use these accounts to test the platform and see the different user interfaces!
 **Role:** Landlord  
 **Plan:** Free (1 property listing limit)
 
+### 📦 What's In This Account:
+- **1 Property Listed:** Semi-Detached HMO in SW15 3QR
+- **At Free Tier Limit:** Cannot post more without upgrading
+
 ### What You'll See:
 - ✅ Blue "Landlord" badge in header
 - ✅ Menu: Browse Wanted Ads | List Property | Dashboard
-- ✅ Can post 1 property listing
+- ✅ Dashboard shows 1 active property
+- ✅ See matching businesses (4 wanted ads match your property!)
 - ❌ Contact details are blurred (upgrade to access)
+- ❌ Blocked from posting 2nd property (free limit)
 
 ---
 
@@ -26,11 +32,17 @@ Use these accounts to test the platform and see the different user interfaces!
 **Role:** Business  
 **Plan:** Free (1 wanted ad limit)
 
+### 📦 What's In This Account:
+- **1 Wanted Ad Posted:** Looking for Care Home property in London SW
+- **At Free Tier Limit:** Cannot post more without upgrading
+
 ### What You'll See:
 - ✅ Purple "Business" badge in header
 - ✅ Menu: Browse Properties | Post Wanted Ad | Dashboard
-- ✅ Can post 1 wanted ad
+- ✅ Dashboard shows 1 active wanted ad
+- ✅ See matching properties (5 properties available!)
 - ❌ Contact details are blurred (upgrade to access)
+- ❌ Blocked from posting 2nd wanted ad (free limit)
 
 ---
 
@@ -41,12 +53,20 @@ Use these accounts to test the platform and see the different user interfaces!
 **Role:** Landlord  
 **Plan:** **Pro (Paid)** ✨
 
+### 📦 What's In This Account:
+- **3 Properties Listed:**
+  1. Detached Care Home property in SW15 (£4,500/mo)
+  2. Block of Flats in E14 (£6,800/mo)
+  3. Terraced house in Manchester (£2,800/mo)
+- **No Limits:** Can post unlimited more!
+
 ### What You'll See:
-- ✅ Blue "Landlord" badge + Gold "Pro" badge
+- ✅ Blue "Landlord" badge + Gold "Pro" badge in header
 - ✅ Menu: Browse Wanted Ads | List Property | Dashboard
-- ✅ **Unlimited property listings**
-- ✅ **Full contact details visible** (no blur!)
-- ✅ Verified badge
+- ✅ Dashboard shows 3 active properties
+- ✅ **Unlimited property listings** - add as many as you want!
+- ✅ **Full contact details visible** on wanted ads (no blur!)
+- ✅ Pro badge shows premium status
 
 ---
 
@@ -57,12 +77,20 @@ Use these accounts to test the platform and see the different user interfaces!
 **Role:** Business  
 **Plan:** **Pro (Paid)** ✨
 
+### 📦 What's In This Account:
+- **3 Wanted Ads Posted:**
+  1. Corporate Lets in London Central (£8,000/mo budget)
+  2. Rent-to-Rent in Manchester/Birmingham (£2,500/mo budget)
+  3. Nursery property in London West (£4,000/mo budget)
+- **No Limits:** Can post unlimited more!
+
 ### What You'll See:
-- ✅ Purple "Business" badge + Gold "Pro" badge
+- ✅ Purple "Business" badge + Gold "Pro" badge in header
 - ✅ Menu: Browse Properties | Post Wanted Ad | Dashboard
-- ✅ **Unlimited wanted ads**
-- ✅ **Full contact details visible** (no blur!)
-- ✅ Verified badge
+- ✅ Dashboard shows 3 active wanted ads
+- ✅ **Unlimited wanted ads** - add as many as you want!
+- ✅ **Full contact details visible** on properties (no blur!)
+- ✅ Pro badge shows premium status
 
 ---
 
