@@ -3,8 +3,7 @@ import mongoose from 'mongoose';
 const propertySchema = new mongoose.Schema({
   // User Reference
   userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
+    type: String,  // Using String for now (mock auth), change to ObjectId when implementing real auth
     required: true
   },
   landlordName: {
