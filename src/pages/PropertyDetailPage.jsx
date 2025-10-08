@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { PaidFeatureGate } from '../components/PaidFeatureGate';
+import { propertiesAPI } from '../utils/api';
 import { 
   MapPin, 
   Home, 
@@ -22,21 +23,52 @@ export const PropertyDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [property, setProperty] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    const properties = JSON.parse(localStorage.getItem('corphaus_properties') || '[]');
-    const found = properties.find((p) => p.id === id);
-    if (found) {
-      setProperty(found);
-    } else {
-      navigate('/properties');
-    }
+    const fetchProperty = async () => {
+      try {
+        setLoading(true);
+        const response = await propertiesAPI.getById(id);
+        setProperty(response.data);
+        setError(null);
+      } catch (err) {
+        console.error('Error fetching property:', err);
+        setError('Property not found');
+        // Navigate back to properties page after a short delay
+        setTimeout(() => {
+          navigate('/properties');
+        }, 2000);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProperty();
   }, [id, navigate]);
 
-  if (!property) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-primary-600 mx-auto"></div>
+          <p className="text-gray-500 mt-4 text-lg">Loading property details...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !property) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-red-600 text-lg mb-4">{error || 'Property not found'}</div>
+          <p className="text-gray-500 mb-4">Redirecting back to properties...</p>
+          <Link to="/properties" className="btn-primary">
+            Back to Properties
+          </Link>
+        </div>
       </div>
     );
   }
