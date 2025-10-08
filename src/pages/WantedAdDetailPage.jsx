@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { PaidFeatureGate } from '../components/PaidFeatureGate';
+import { wantedAdsAPI } from '../utils/api';
 import { 
   MapPin, 
   Briefcase, 
@@ -16,21 +17,52 @@ export const WantedAdDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [ad, setAd] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    const ads = JSON.parse(localStorage.getItem('corphaus_wanted_ads') || '[]');
-    const found = ads.find((a) => a.id === id);
-    if (found) {
-      setAd(found);
-    } else {
-      navigate('/wanted-ads');
-    }
+    const fetchAd = async () => {
+      try {
+        setLoading(true);
+        const response = await wantedAdsAPI.getById(id);
+        setAd(response.data);
+        setError(null);
+      } catch (err) {
+        console.error('Error fetching wanted ad:', err);
+        setError('Wanted ad not found');
+        // Navigate back to wanted ads page after a short delay
+        setTimeout(() => {
+          navigate('/wanted-ads');
+        }, 2000);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAd();
   }, [id, navigate]);
 
-  if (!ad) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-primary-600 mx-auto"></div>
+          <p className="text-gray-500 mt-4 text-lg">Loading wanted ad details...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !ad) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-red-600 text-lg mb-4">{error || 'Wanted ad not found'}</div>
+          <p className="text-gray-500 mb-4">Redirecting back to wanted ads...</p>
+          <Link to="/wanted-ads" className="btn-primary">
+            Back to Wanted Ads
+          </Link>
+        </div>
       </div>
     );
   }

@@ -7,8 +7,8 @@ export const PropertyCard = ({ property }) => {
       to={`/properties/${property._id || property.id}`}
       className="block"
     >
-      <div className="aspect-[4/3] bg-gradient-to-br from-primary-100 to-primary-200 rounded-lg mb-4 flex items-center justify-center">
-        <Home className="w-12 h-12 text-primary-600 opacity-60" />
+      <div className="aspect-[2/1] bg-gradient-to-br from-primary-100 to-primary-200 rounded-lg mb-2 flex items-center justify-center">
+        <Home className="w-4 h-4 text-primary-600 opacity-60" />
       </div>
 
       <div className="space-y-2">

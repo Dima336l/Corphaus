@@ -5,7 +5,7 @@ export const WantedAdCard = ({ ad }) => {
   return (
     <Link
       to={`/wanted-ads/${ad._id || ad.id}`}
-      className="card block hover:scale-[1.02] transition-transform"
+      className="block"
     >
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center space-x-2">
