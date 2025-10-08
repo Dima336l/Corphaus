@@ -5,10 +5,10 @@ export const PropertyCard = ({ property }) => {
   return (
     <Link
       to={`/properties/${property._id || property.id}`}
-      className="card block hover:scale-[1.02] transition-transform"
+      className="block"
     >
-      <div className="aspect-video bg-gradient-to-br from-primary-100 to-primary-200 rounded-lg mb-4 flex items-center justify-center">
-        <Home className="w-16 h-16 text-primary-600 opacity-50" />
+      <div className="aspect-[4/3] bg-gradient-to-br from-primary-100 to-primary-200 rounded-lg mb-4 flex items-center justify-center">
+        <Home className="w-12 h-12 text-primary-600 opacity-60" />
       </div>
 
       <div className="space-y-2">
