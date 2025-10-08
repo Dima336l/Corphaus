@@ -139,8 +139,8 @@ export const HomePage = () => {
               'Assisted Living',
               'Corporate Lets',
               'Emergency Accommodation',
+              'Serviced Accommodation',
               'Social Housing',
-              'Asylum Seekers Housing',
               'Nursery'
             ].map((model) => (
               <div key={model} className="bg-white rounded-lg p-4 text-center font-semibold text-gray-700 shadow-sm hover:shadow-md transition-shadow">

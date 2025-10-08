@@ -20,7 +20,7 @@ export const businessModels = [
   'Assisted Living',
   'Corporate Lets',
   'Emergency Accommodation',
-  'Asylum Seekers / Social Housing',
+  'Serviced Accommodation',
   'Nursery',
   'Other'
 ];

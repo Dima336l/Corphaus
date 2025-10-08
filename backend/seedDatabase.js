@@ -75,7 +75,7 @@ const mockProperties = [
     postcode: 'E14 5LQ',
     useClass: 'Sui Generis - HMO (7+ people)',
     alterationsAllowed: true,
-    businessModels: ['Emergency Accommodation', 'Asylum Seekers / Social Housing', 'Corporate Lets'],
+    businessModels: ['Emergency Accommodation', 'Serviced Accommodation', 'Corporate Lets'],
     epcRating: 'B',
     furnished: false,
     wheelchairAccessible: true,

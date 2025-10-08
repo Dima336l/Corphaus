@@ -24,7 +24,7 @@ const wantedAdSchema = new mongoose.Schema({
       'Assisted Living',
       'Corporate Lets',
       'Emergency Accommodation',
-      'Asylum Seekers / Social Housing',
+      'Serviced Accommodation',
       'Nursery',
       'Other'
     ],
