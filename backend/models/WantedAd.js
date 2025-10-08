@@ -38,7 +38,7 @@ const wantedAdSchema = new mongoose.Schema({
   // Property Requirements
   propertyType: {
     type: String,
-    enum: ['Detached', 'Semi-Detached', 'Terraced', 'Block of Flats', 'Any']
+    enum: ['Detached', 'Semi-Detached', 'Terraced', 'Block of Flats', 'Any', '']
   },
   minBedrooms: {
     type: Number,
