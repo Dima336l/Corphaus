@@ -10,7 +10,7 @@ export const LoginPage = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
@@ -19,12 +19,14 @@ export const LoginPage = () => {
       return;
     }
 
-    // In production, this would validate with backend
-    const result = login(email, password, 'landlord'); // Default to landlord for mock
+    // Call backend API for authentication
+    const result = await login(email, password);
     
     if (result.success) {
       const dashboardPath = result.user.role === 'landlord' ? '/landlord/dashboard' : '/business/dashboard';
       navigate(dashboardPath);
+    } else {
+      setError(result.message || 'Login failed. Please check your credentials.');
     }
   };
 

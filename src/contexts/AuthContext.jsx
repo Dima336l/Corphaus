@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
+import { authAPI } from '../utils/api';
 
 const AuthContext = createContext(null);
 
@@ -23,36 +24,47 @@ export const AuthProvider = ({ children }) => {
     setLoading(false);
   }, []);
 
-  const login = (email, password, role) => {
-    // Mock login - in production this would call your backend API
-    const mockUser = {
-      id: Math.random().toString(36).substr(2, 9),
-      email,
-      role, // 'landlord' or 'business'
-      name: email.split('@')[0],
-      isPaid: false, // Free user by default
-      createdAt: new Date().toISOString(),
-    };
-    
-    setUser(mockUser);
-    localStorage.setItem('corphaus_user', JSON.stringify(mockUser));
-    return { success: true, user: mockUser };
+  const login = async (email, password) => {
+    try {
+      const response = await authAPI.login(email, password);
+      
+      if (response.success) {
+        const userData = {
+          id: response.user._id,
+          ...response.user,
+        };
+        setUser(userData);
+        localStorage.setItem('corphaus_user', JSON.stringify(userData));
+        return { success: true, user: userData };
+      }
+      
+      return { success: false, message: response.message };
+    } catch (error) {
+      console.error('Login error:', error);
+      return { success: false, message: error.message || 'Login failed' };
+    }
   };
 
-  const signup = (email, password, role, businessName = '') => {
-    // Mock signup - in production this would call your backend API
-    const mockUser = {
-      id: Math.random().toString(36).substr(2, 9),
-      email,
-      role, // 'landlord' or 'business'
-      name: businessName || email.split('@')[0],
-      isPaid: false, // Free user by default
-      createdAt: new Date().toISOString(),
-    };
-    
-    setUser(mockUser);
-    localStorage.setItem('corphaus_user', JSON.stringify(mockUser));
-    return { success: true, user: mockUser };
+  const signup = async (email, password, role, businessName = '') => {
+    try {
+      const name = businessName || email.split('@')[0];
+      const response = await authAPI.signup(email, password, name, role, businessName);
+      
+      if (response.success) {
+        const userData = {
+          id: response.user._id,
+          ...response.user,
+        };
+        setUser(userData);
+        localStorage.setItem('corphaus_user', JSON.stringify(userData));
+        return { success: true, user: userData };
+      }
+      
+      return { success: false, message: response.message };
+    } catch (error) {
+      console.error('Signup error:', error);
+      return { success: false, message: error.message || 'Signup failed' };
+    }
   };
 
   const logout = () => {
@@ -60,11 +72,27 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('corphaus_user');
   };
 
-  const upgradeToPaid = () => {
+  const upgradeToPaid = async () => {
     if (user) {
-      const updatedUser = { ...user, isPaid: true };
-      setUser(updatedUser);
-      localStorage.setItem('corphaus_user', JSON.stringify(updatedUser));
+      try {
+        const response = await authAPI.upgrade(user.id || user._id);
+        
+        if (response.success) {
+          const updatedUser = {
+            ...user,
+            isPaid: true,
+            subscriptionPlan: 'pro',
+          };
+          setUser(updatedUser);
+          localStorage.setItem('corphaus_user', JSON.stringify(updatedUser));
+          return { success: true };
+        }
+        
+        return { success: false, message: response.message };
+      } catch (error) {
+        console.error('Upgrade error:', error);
+        return { success: false, message: error.message };
+      }
     }
   };
 

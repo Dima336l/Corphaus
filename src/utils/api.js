@@ -124,7 +124,42 @@ export const wantedAdsAPI = {
   },
 };
 
+// Auth API
+export const authAPI = {
+  signup: (email, password, name, role, businessName = '') => {
+    return apiRequest('/auth/signup', {
+      method: 'POST',
+      body: JSON.stringify({ email, password, name, role, businessName }),
+    });
+  },
+
+  login: (email, password) => {
+    return apiRequest('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ email, password }),
+    });
+  },
+
+  getMe: (userId) => {
+    return apiRequest('/auth/me', {
+      headers: {
+        'x-user-id': userId,
+      },
+    });
+  },
+
+  upgrade: (userId) => {
+    return apiRequest('/auth/upgrade', {
+      method: 'POST',
+      headers: {
+        'x-user-id': userId,
+      },
+    });
+  },
+};
+
 export default {
+  auth: authAPI,
   properties: propertiesAPI,
   wantedAds: wantedAdsAPI,
 };

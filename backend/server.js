@@ -4,6 +4,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import propertyRoutes from './routes/propertyRoutes.js';
 import wantedAdRoutes from './routes/wantedAdRoutes.js';
+import authRoutes from './routes/authRoutes.js';
 
 dotenv.config();
 
@@ -44,6 +45,7 @@ app.get('/api/health', (req, res) => {
 });
 
 // API Routes
+app.use('/api/auth', authRoutes);
 app.use('/api/properties', propertyRoutes);
 app.use('/api/wanted-ads', wantedAdRoutes);
 
@@ -54,6 +56,12 @@ app.get('/api', (req, res) => {
     version: '1.0.0',
     endpoints: {
       health: '/api/health',
+      auth: {
+        signup: 'POST /api/auth/signup',
+        login: 'POST /api/auth/login',
+        getMe: 'GET /api/auth/me (auth required)',
+        upgrade: 'POST /api/auth/upgrade (auth required)'
+      },
       properties: {
         getAll: 'GET /api/properties',
         getById: 'GET /api/properties/:id',

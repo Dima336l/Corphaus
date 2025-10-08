@@ -15,7 +15,7 @@ export const SignupPage = () => {
   const { signup } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
@@ -39,7 +39,7 @@ export const SignupPage = () => {
       return;
     }
 
-    const result = signup(
+    const result = await signup(
       formData.email,
       formData.password,
       formData.role,
@@ -49,6 +49,8 @@ export const SignupPage = () => {
     if (result.success) {
       const dashboardPath = formData.role === 'landlord' ? '/landlord/dashboard' : '/business/dashboard';
       navigate(dashboardPath);
+    } else {
+      setError(result.message || 'Signup failed. Please try again.');
     }
   };
 
