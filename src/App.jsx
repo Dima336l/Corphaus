@@ -20,7 +20,7 @@ import { ContactPage } from './pages/ContactPage';
 
 function App() {
   return (
-    <Router>
+    <Router basename="/Corphaus">
       <AuthProvider>
         <Routes>
           {/* Public routes with layout */}
