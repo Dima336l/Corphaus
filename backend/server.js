@@ -5,6 +5,7 @@ import dotenv from 'dotenv';
 import propertyRoutes from './routes/propertyRoutes.js';
 import wantedAdRoutes from './routes/wantedAdRoutes.js';
 import authRoutes from './routes/authRoutes.js';
+import messageRoutes from './routes/messageRoutes.js';
 
 dotenv.config();
 
@@ -48,6 +49,7 @@ app.get('/api/health', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/properties', propertyRoutes);
 app.use('/api/wanted-ads', wantedAdRoutes);
+app.use('/api/messages', messageRoutes);
 
 // Test route
 app.get('/api', (req, res) => {
@@ -77,6 +79,14 @@ app.get('/api', (req, res) => {
         create: 'POST /api/wanted-ads (auth required)',
         update: 'PUT /api/wanted-ads/:id (auth required)',
         delete: 'DELETE /api/wanted-ads/:id (auth required)'
+      },
+      messages: {
+        send: 'POST /api/messages (auth required)',
+        conversations: 'GET /api/messages/conversations (auth required)',
+        thread: 'GET /api/messages/thread/:threadId (auth required)',
+        markRead: 'PUT /api/messages/read/:threadId (auth required)',
+        unreadCount: 'GET /api/messages/unread-count (auth required)',
+        delete: 'DELETE /api/messages/:messageId (auth required)'
       }
     }
   });

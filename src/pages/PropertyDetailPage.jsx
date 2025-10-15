@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { PaidFeatureGate } from '../components/PaidFeatureGate';
-import { propertiesAPI } from '../utils/api';
+import { propertiesAPI, messagesAPI } from '../utils/api';
+import { useAuth } from '../contexts/AuthContext';
 import { 
   MapPin, 
   Home, 
@@ -22,9 +23,11 @@ import {
 export const PropertyDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [property, setProperty] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [sendingMessage, setSendingMessage] = useState(false);
 
   useEffect(() => {
     const fetchProperty = async () => {
@@ -47,6 +50,41 @@ export const PropertyDetailPage = () => {
 
     fetchProperty();
   }, [id, navigate]);
+
+  const handleSendMessage = async () => {
+    if (!user) {
+      // Redirect to login if not authenticated
+      navigate('/login');
+      return;
+    }
+
+    if (!property?.landlord?._id) {
+      alert('Unable to contact landlord at this time.');
+      return;
+    }
+
+    setSendingMessage(true);
+
+    try {
+      // Send initial message
+      const messageData = {
+        recipientId: property.landlord._id,
+        content: `Hi, I'm interested in your property: ${property.propertyType} at ${property.streetAddress}, ${property.postcode}`,
+        relatedPropertyId: property._id
+      };
+
+      const response = await messagesAPI.send(messageData, user._id);
+      
+      // Navigate to messages with this thread
+      const threadId = response.data.threadId;
+      navigate(`/messages?thread=${threadId}`);
+    } catch (err) {
+      console.error('Failed to send message:', err);
+      alert('Failed to send message. Please try again.');
+    } finally {
+      setSendingMessage(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -268,8 +306,22 @@ export const PropertyDetailPage = () => {
                     </div>
                   </div>
 
-                  <button className="w-full btn-primary mt-4">
-                    Send Message
+                  <button
+                    onClick={handleSendMessage}
+                    disabled={sendingMessage || !user}
+                    className="w-full btn-primary mt-4 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    {sendingMessage ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                        Sending...
+                      </>
+                    ) : (
+                      <>
+                        <Mail className="w-4 h-4" />
+                        {user ? 'Send Message' : 'Log in to Message'}
+                      </>
+                    )}
                   </button>
                 </div>
               </PaidFeatureGate>

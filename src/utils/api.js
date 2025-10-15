@@ -158,9 +158,65 @@ export const authAPI = {
   },
 };
 
+// Messages API
+export const messagesAPI = {
+  send: (messageData, userId) => {
+    return apiRequest('/messages', {
+      method: 'POST',
+      headers: {
+        'x-user-id': userId,
+      },
+      body: JSON.stringify(messageData),
+    });
+  },
+
+  getConversations: (userId) => {
+    return apiRequest('/messages/conversations', {
+      headers: {
+        'x-user-id': userId,
+      },
+    });
+  },
+
+  getThread: (threadId, userId) => {
+    return apiRequest(`/messages/thread/${threadId}`, {
+      headers: {
+        'x-user-id': userId,
+      },
+    });
+  },
+
+  markAsRead: (threadId, userId) => {
+    return apiRequest(`/messages/read/${threadId}`, {
+      method: 'PUT',
+      headers: {
+        'x-user-id': userId,
+      },
+    });
+  },
+
+  getUnreadCount: (userId) => {
+    return apiRequest('/messages/unread-count', {
+      headers: {
+        'x-user-id': userId,
+      },
+    });
+  },
+
+  delete: (messageId, userId) => {
+    return apiRequest(`/messages/${messageId}`, {
+      method: 'DELETE',
+      headers: {
+        'x-user-id': userId,
+      },
+    });
+  },
+};
+
 export default {
   auth: authAPI,
   properties: propertiesAPI,
   wantedAds: wantedAdsAPI,
+  messages: messagesAPI,
 };
 

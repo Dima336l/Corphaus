@@ -1,12 +1,35 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { Building2, Menu, X, User, LogOut, LayoutDashboard, Home, PlusCircle, ListChecks, Briefcase } from 'lucide-react';
-import { useState } from 'react';
+import { Building2, Menu, X, User, LogOut, LayoutDashboard, Home, PlusCircle, ListChecks, Briefcase, MessageCircle } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { messagesAPI } from '../utils/api';
 
 export const Header = () => {
   const { isAuthenticated, user, logout } = useAuth();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  // Fetch unread message count
+  useEffect(() => {
+    const fetchUnreadCount = async () => {
+      if (user?._id) {
+        try {
+          const response = await messagesAPI.getUnreadCount(user._id);
+          setUnreadCount(response.count || 0);
+        } catch (error) {
+          console.error('Failed to fetch unread count:', error);
+        }
+      }
+    };
+
+    fetchUnreadCount();
+
+    // Poll every 30 seconds for new messages
+    const interval = setInterval(fetchUnreadCount, 30000);
+
+    return () => clearInterval(interval);
+  }, [user]);
 
   const handleLogout = () => {
     logout();
@@ -65,6 +88,15 @@ export const Header = () => {
                   <PlusCircle className="w-4 h-4" />
                   <span>List Property</span>
                 </Link>
+                <Link to="/messages" className="flex items-center space-x-1 text-gray-700 hover:text-primary-600 font-medium transition-colors relative">
+                  <MessageCircle className="w-4 h-4" />
+                  <span>Messages</span>
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-semibold">
+                      {unreadCount > 9 ? '9+' : unreadCount}
+                    </span>
+                  )}
+                </Link>
                 <Link to="/landlord/dashboard" className="flex items-center space-x-1 text-gray-700 hover:text-primary-600 font-medium transition-colors">
                   <LayoutDashboard className="w-4 h-4" />
                   <span>Dashboard</span>
@@ -106,6 +138,15 @@ export const Header = () => {
                 <Link to="/business/add-wanted-ad" className="flex items-center space-x-1 text-gray-700 hover:text-primary-600 font-medium transition-colors">
                   <PlusCircle className="w-4 h-4" />
                   <span>Post Wanted Ad</span>
+                </Link>
+                <Link to="/messages" className="flex items-center space-x-1 text-gray-700 hover:text-primary-600 font-medium transition-colors relative">
+                  <MessageCircle className="w-4 h-4" />
+                  <span>Messages</span>
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-semibold">
+                      {unreadCount > 9 ? '9+' : unreadCount}
+                    </span>
+                  )}
                 </Link>
                 <Link to="/business/dashboard" className="flex items-center space-x-1 text-gray-700 hover:text-primary-600 font-medium transition-colors">
                   <LayoutDashboard className="w-4 h-4" />
@@ -236,6 +277,18 @@ export const Header = () => {
                   💼 Browse Wanted Ads
                 </Link>
                 <Link
+                  to="/messages"
+                  className="block text-gray-700 hover:text-primary-600 font-medium py-2 relative"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  💬 Messages
+                  {unreadCount > 0 && (
+                    <span className="ml-2 bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
+                      {unreadCount}
+                    </span>
+                  )}
+                </Link>
+                <Link
                   to="/pricing"
                   className="block text-gray-700 hover:text-primary-600 font-medium py-2"
                   onClick={() => setMobileMenuOpen(false)}
@@ -286,6 +339,18 @@ export const Header = () => {
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   🏠 Browse Properties
+                </Link>
+                <Link
+                  to="/messages"
+                  className="block text-gray-700 hover:text-primary-600 font-medium py-2 relative"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  💬 Messages
+                  {unreadCount > 0 && (
+                    <span className="ml-2 bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
+                      {unreadCount}
+                    </span>
+                  )}
                 </Link>
                 <Link
                   to="/pricing"

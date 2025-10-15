@@ -17,6 +17,7 @@ import { LandlordDashboard } from './pages/LandlordDashboard';
 import { BusinessDashboard } from './pages/BusinessDashboard';
 import { PricingPage } from './pages/PricingPage';
 import { ContactPage } from './pages/ContactPage';
+import MessagesPage from './pages/MessagesPage';
 
 function App() {
   return (
@@ -32,6 +33,16 @@ function App() {
             <Route path="/wanted-ads/:id" element={<WantedAdDetailPage />} />
             <Route path="/pricing" element={<PricingPage />} />
             <Route path="/contact" element={<ContactPage />} />
+            
+            {/* Messages - Protected for all logged-in users */}
+            <Route
+              path="/messages"
+              element={
+                <ProtectedRoute>
+                  <MessagesPage />
+                </ProtectedRoute>
+              }
+            />
 
             {/* Protected Landlord Routes */}
             <Route
