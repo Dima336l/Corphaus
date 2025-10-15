@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 const ChatBot = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -8,6 +9,7 @@ const ChatBot = () => {
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef(null);
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -294,16 +296,18 @@ const ChatBot = () => {
                             const linkMatch = remaining.match(/^\[([^\]]+)\]\(([^)]+)\)/);
                             if (linkMatch) {
                               elements.push(
-                                <a
+                                <button
                                   key={key++}
-                                  href={linkMatch[2]}
+                                  onClick={() => {
+                                    setIsOpen(false);
+                                    navigate(linkMatch[2]);
+                                  }}
                                   className={`underline font-semibold ${
                                     message.type === 'user' ? 'text-white' : 'text-blue-600'
-                                  } hover:opacity-80`}
-                                  onClick={() => setIsOpen(false)}
+                                  } hover:opacity-80 cursor-pointer bg-transparent border-none p-0`}
                                 >
                                   {linkMatch[1]}
-                                </a>
+                                </button>
                               );
                               remaining = remaining.slice(linkMatch[0].length);
                               continue;
