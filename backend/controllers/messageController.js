@@ -105,6 +105,17 @@ export const getConversations = async (req, res) => {
       // Debug: Log the relatedProperty data
       console.log('DEBUG - lastMsg.relatedProperty:', lastMsg.relatedProperty);
       console.log('DEBUG - lastMsg.relatedWantedAd:', lastMsg.relatedWantedAd);
+      console.log('DEBUG - lastMsg keys:', Object.keys(lastMsg));
+      console.log('DEBUG - lastMsg.relatedProperty type:', typeof lastMsg.relatedProperty);
+      if (lastMsg.relatedProperty) {
+        console.log('DEBUG - relatedProperty keys:', Object.keys(lastMsg.relatedProperty));
+      }
+      
+      // Direct property lookup for debugging
+      if (lastMsg.relatedProperty && lastMsg.relatedProperty._id) {
+        const directProperty = await Property.findById(lastMsg.relatedProperty._id);
+        console.log('DEBUG - Direct property lookup:', directProperty);
+      }
       
       // Safety check
       if (!lastMsg || !lastMsg.sender || !lastMsg.recipient) {
