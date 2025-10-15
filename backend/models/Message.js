@@ -71,64 +71,46 @@ messageSchema.statics.generateThreadId = function(user1Id, user2Id, relatedItemI
 
 // Get conversation summary (for listing all conversations)
 messageSchema.statics.getConversations = async function(userId) {
-  const conversations = await this.aggregate([
-    {
-      $match: {
-        $or: [
-          { sender: new mongoose.Types.ObjectId(userId) },
-          { recipient: new mongoose.Types.ObjectId(userId) }
-        ]
-      }
-    },
-    {
-      $sort: { createdAt: -1 }
-    },
-    {
-      $group: {
-        _id: '$threadId',
-        lastMessage: { $first: '$$ROOT' },
-        unreadCount: {
-          $sum: {
-            $cond: [
-              {
-                $and: [
-                  { $eq: ['$recipient', new mongoose.Types.ObjectId(userId)] },
-                  { $eq: ['$read', false] }
-                ]
-              },
-              1,
-              0
-            ]
-          }
-        }
-      }
-    },
-    {
-      $sort: { 'lastMessage.createdAt': -1 }
-    }
-  ]);
+  try {
+    // Simpler approach: Get all unique thread IDs for this user
+    const userIdObj = new mongoose.Types.ObjectId(userId);
+    
+    const messages = await this.find({
+      $or: [
+        { sender: userIdObj },
+        { recipient: userIdObj }
+      ]
+    })
+    .sort({ createdAt: -1 })
+    .populate('sender', 'name email role')
+    .populate('recipient', 'name email role')
+    .populate('relatedProperty', 'title address price')
+    .populate('relatedWantedAd', 'title location budget');
 
-  // Populate user and related item details
-  await this.populate(conversations, [
-    {
-      path: 'lastMessage.sender',
-      select: 'name email role'
-    },
-    {
-      path: 'lastMessage.recipient',
-      select: 'name email role'
-    },
-    {
-      path: 'lastMessage.relatedProperty',
-      select: 'title address price'
-    },
-    {
-      path: 'lastMessage.relatedWantedAd',
-      select: 'title location budget'
+    // Group by threadId and get the most recent message per thread
+    const threadMap = new Map();
+    
+    for (const message of messages) {
+      if (!threadMap.has(message.threadId)) {
+        threadMap.set(message.threadId, {
+          _id: message.threadId,
+          lastMessage: message,
+          unreadCount: 0
+        });
+      }
+      
+      // Count unread messages where user is recipient
+      if (message.recipient._id.toString() === userId && !message.read) {
+        const conv = threadMap.get(message.threadId);
+        conv.unreadCount++;
+      }
     }
-  ]);
 
-  return conversations;
+    return Array.from(threadMap.values());
+  } catch (error) {
+    console.error('Error in getConversations:', error);
+    return [];
+  }
 };
 
 const Message = mongoose.model('Message', messageSchema);
