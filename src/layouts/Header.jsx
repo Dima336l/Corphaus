@@ -29,7 +29,8 @@ export const Header = () => {
     const interval = setInterval(fetchUnreadCount, 30000);
 
     return () => clearInterval(interval);
-  }, [user]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?._id]); // Only reload when user ID changes
 
   const handleLogout = () => {
     logout();

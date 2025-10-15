@@ -89,13 +89,6 @@ export const PropertyDetailPage = () => {
         relatedPropertyId: property._id
       };
 
-      // Debug logging
-      console.log('Sending message:', {
-        messageData,
-        userId: user._id,
-        property: property
-      });
-
       const response = await messagesAPI.send(messageData, user._id);
       
       // Navigate to messages with this thread

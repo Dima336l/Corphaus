@@ -20,15 +20,6 @@ const apiRequest = async (endpoint, options = {}) => {
     headers,
   };
 
-  // DEBUG: Log the full request
-  console.log('API Request:', {
-    url,
-    method: config.method || 'GET',
-    headers: config.headers,
-    body: config.body,
-    bodyParsed: config.body ? JSON.parse(config.body) : null
-  });
-
   try {
     const response = await fetch(url, config);
     const data = await response.json();

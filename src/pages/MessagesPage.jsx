@@ -17,7 +17,8 @@ const MessagesPage = () => {
 
   useEffect(() => {
     loadConversations();
-  }, [user]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?._id]); // Only reload when user ID changes, not the whole user object
 
   useEffect(() => {
     if (threadParam && conversations.length > 0) {
