@@ -36,11 +36,6 @@ const MessageThread = ({ thread, onBack, onMessageSent }) => {
 
       // Mark as read
       await messagesAPI.markAsRead(thread.threadId, user._id);
-      
-      // Notify parent to update conversation list
-      if (onMessageSent) {
-        onMessageSent();
-      }
     } catch (err) {
       console.error('Failed to load messages:', err);
       setError('Failed to load messages. Please try again.');
