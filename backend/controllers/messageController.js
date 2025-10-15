@@ -127,6 +127,20 @@ export const getConversations = async (req, res) => {
         ? lastMsg.recipient
         : lastMsg.sender;
 
+      // Manually fetch property data if relatedProperty exists but is not populated
+      let relatedItem = lastMsg.relatedProperty || lastMsg.relatedWantedAd || null;
+      if (lastMsg.relatedProperty && lastMsg.relatedProperty._id) {
+        // Check if property data is not fully populated
+        if (!lastMsg.relatedProperty.propertyType || !lastMsg.relatedProperty.streetAddress) {
+          console.log('DEBUG - Manually fetching property data for ID:', lastMsg.relatedProperty._id);
+          const propertyData = await Property.findById(lastMsg.relatedProperty._id);
+          if (propertyData) {
+            relatedItem = propertyData;
+            console.log('DEBUG - Fetched property data:', propertyData);
+          }
+        }
+      }
+
       return {
         threadId: conv._id,
         otherUser: {
@@ -141,7 +155,7 @@ export const getConversations = async (req, res) => {
           isFromMe: lastMsg.sender._id.toString() === req.user._id.toString(),
           read: lastMsg.read
         },
-        relatedItem: lastMsg.relatedProperty || lastMsg.relatedWantedAd || null,
+        relatedItem: relatedItem,
         relatedItemType: lastMsg.relatedProperty ? 'property' : lastMsg.relatedWantedAd ? 'wantedAd' : null,
         unreadCount: conv.unreadCount
       };
