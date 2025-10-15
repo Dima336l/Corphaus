@@ -69,13 +69,22 @@ export const PropertyDetailPage = () => {
       return;
     }
 
+    // Prompt user for their message
+    const defaultMessage = `Hi, I'm interested in your property: ${property.propertyType} at ${property.streetAddress}, ${property.postcode}`;
+    const userMessage = window.prompt('Enter your message to the landlord:', defaultMessage);
+
+    if (!userMessage || userMessage.trim() === '') {
+      // User cancelled or entered empty message
+      return;
+    }
+
     setSendingMessage(true);
 
     try {
-      // Send initial message
+      // Send the user's message
       const messageData = {
         recipientId: property.userId,
-        content: `Hi, I'm interested in your property: ${property.propertyType} at ${property.streetAddress}, ${property.postcode}`,
+        content: userMessage.trim(),
         relatedPropertyId: property._id
       };
 

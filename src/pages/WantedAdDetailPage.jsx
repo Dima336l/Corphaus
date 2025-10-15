@@ -63,13 +63,22 @@ export const WantedAdDetailPage = () => {
       return;
     }
 
+    // Prompt user for their message
+    const defaultMessage = `Hi, I'm interested in your wanted ad: ${ad.companyName} looking for ${ad.businessType} in ${ad.preferredLocation}`;
+    const userMessage = window.prompt('Enter your message to the business:', defaultMessage);
+
+    if (!userMessage || userMessage.trim() === '') {
+      // User cancelled or entered empty message
+      return;
+    }
+
     setSendingMessage(true);
 
     try {
-      // Send initial message
+      // Send the user's message
       const messageData = {
         recipientId: ad.userId,
-        content: `Hi, I'm interested in your wanted ad: ${ad.companyName} looking for ${ad.businessType} in ${ad.preferredLocation}`,
+        content: userMessage.trim(),
         relatedWantedAdId: ad._id
       };
 
