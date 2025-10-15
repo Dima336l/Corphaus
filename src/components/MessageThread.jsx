@@ -247,16 +247,25 @@ const MessageThread = ({ thread, onBack, onMessageSent }) => {
               }
               className="text-sm font-medium text-blue-600 hover:underline"
             >
-              {thread.relatedItem.title}
+              {thread.relatedItemType === 'property' 
+                ? `${thread.relatedItem.propertyType} Property`
+                : thread.relatedItem.title
+              }
             </Link>
-            {thread.relatedItem.address && (
+            {thread.relatedItem.streetAddress && (
               <p className="text-xs text-gray-600 mt-1">
-                📍 {thread.relatedItem.address}
+                📍 {thread.relatedItem.streetAddress}
+                {thread.relatedItem.postcode && `, ${thread.relatedItem.postcode}`}
               </p>
             )}
             {thread.relatedItem.location && (
               <p className="text-xs text-gray-600 mt-1">
                 📍 {thread.relatedItem.location}
+              </p>
+            )}
+            {thread.relatedItem.desiredRent && (
+              <p className="text-xs text-gray-600 mt-1">
+                💰 £{thread.relatedItem.desiredRent}
               </p>
             )}
           </div>

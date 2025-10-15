@@ -75,7 +75,7 @@ export const sendMessage = async (req, res) => {
     await message.populate([
       { path: 'sender', select: 'name email role' },
       { path: 'recipient', select: 'name email role' },
-      { path: 'relatedProperty', select: 'title address price' },
+      { path: 'relatedProperty', select: 'propertyType streetAddress postcode desiredRent' },
       { path: 'relatedWantedAd', select: 'title location budget' }
     ]);
 
