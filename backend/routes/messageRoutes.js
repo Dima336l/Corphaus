@@ -7,12 +7,12 @@ import {
   getUnreadCount,
   deleteMessage
 } from '../controllers/messageController.js';
-import { protect } from '../middleware/auth.js';
+import { authenticate } from '../middleware/auth.js';
 
 const router = express.Router();
 
 // All message routes require authentication
-router.use(protect);
+router.use(authenticate);
 
 // Send a new message
 router.post('/', sendMessage);

@@ -12,7 +12,9 @@ export const authenticate = (req, res, next) => {
     });
   }
   
+  // Set both for compatibility with different controllers
   req.userId = userId;
+  req.user = { _id: userId }; // For message controller compatibility
   next();
 };
 

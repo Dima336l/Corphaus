@@ -75,8 +75,8 @@ messageSchema.statics.getConversations = async function(userId) {
     {
       $match: {
         $or: [
-          { sender: mongoose.Types.ObjectId(userId) },
-          { recipient: mongoose.Types.ObjectId(userId) }
+          { sender: new mongoose.Types.ObjectId(userId) },
+          { recipient: new mongoose.Types.ObjectId(userId) }
         ]
       }
     },
@@ -92,7 +92,7 @@ messageSchema.statics.getConversations = async function(userId) {
             $cond: [
               {
                 $and: [
-                  { $eq: ['$recipient', mongoose.Types.ObjectId(userId)] },
+                  { $eq: ['$recipient', new mongoose.Types.ObjectId(userId)] },
                   { $eq: ['$read', false] }
                 ]
               },
