@@ -254,14 +254,15 @@ const MessageThread = ({ thread, onBack, onMessageSent }) => {
               className="text-sm font-medium text-blue-600 hover:underline"
             >
               {thread.relatedItemType === 'property' 
-                ? `${thread.relatedItem.propertyType || 'Property'}`
+                ? (thread.relatedItem.streetAddress && thread.relatedItem.postcode 
+                    ? `${thread.relatedItem.streetAddress}, ${thread.relatedItem.postcode}`
+                    : thread.relatedItem.propertyType || 'Property')
                 : thread.relatedItem.title || 'Wanted Ad'
               }
             </Link>
-            {thread.relatedItem.streetAddress && (
+            {thread.relatedItem.desiredRent && (
               <p className="text-xs text-gray-600 mt-1">
-                📍 {thread.relatedItem.streetAddress}
-                {thread.relatedItem.postcode && `, ${thread.relatedItem.postcode}`}
+                💰 £{thread.relatedItem.desiredRent}
               </p>
             )}
             {thread.relatedItem.location && (
