@@ -10,7 +10,9 @@ const MessageThread = ({ thread, onBack, onMessageSent }) => {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState(null);
+  const [showOptions, setShowOptions] = useState(false);
   const messagesEndRef = useRef(null);
+  const optionsRef = useRef(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -23,6 +25,20 @@ const MessageThread = ({ thread, onBack, onMessageSent }) => {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Close options menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (optionsRef.current && !optionsRef.current.contains(event.target)) {
+        setShowOptions(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   const loadMessages = async () => {
     if (!thread || !user) return;
@@ -80,6 +96,34 @@ const MessageThread = ({ thread, onBack, onMessageSent }) => {
       setError('Failed to send message. Please try again.');
     } finally {
       setSending(false);
+    }
+  };
+
+  const handleOptionsClick = () => {
+    setShowOptions(!showOptions);
+  };
+
+  const handleMarkAsRead = async () => {
+    try {
+      await messagesAPI.markAsRead(thread.threadId, user._id);
+      setShowOptions(false);
+      if (onMessageSent) {
+        onMessageSent();
+      }
+    } catch (err) {
+      console.error('Failed to mark as read:', err);
+    }
+  };
+
+  const handleDeleteConversation = async () => {
+    if (window.confirm('Are you sure you want to delete this conversation? This action cannot be undone.')) {
+      try {
+        // Note: This would require a delete conversation endpoint in the backend
+        console.log('Delete conversation functionality would be implemented here');
+        setShowOptions(false);
+      } catch (err) {
+        console.error('Failed to delete conversation:', err);
+      }
     }
   };
 
@@ -142,25 +186,51 @@ const MessageThread = ({ thread, onBack, onMessageSent }) => {
             </p>
           </div>
 
-          {/* Options menu (future enhancement) */}
-          <button
-            className="text-gray-600 hover:text-gray-900"
-            aria-label="Options"
-          >
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+          {/* Options menu */}
+          <div className="relative" ref={optionsRef}>
+            <button
+              onClick={handleOptionsClick}
+              className="text-gray-600 hover:text-gray-900 p-1 rounded-full hover:bg-gray-100"
+              aria-label="Options"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
-              />
-            </svg>
-          </button>
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
+                />
+              </svg>
+            </button>
+
+            {showOptions && (
+              <div className="absolute right-0 top-8 bg-white border border-gray-200 rounded-lg shadow-lg py-1 z-10 min-w-[160px]">
+                <button
+                  onClick={handleMarkAsRead}
+                  className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  Mark as read
+                </button>
+                <button
+                  onClick={handleDeleteConversation}
+                  className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                  Delete conversation
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Related item */}

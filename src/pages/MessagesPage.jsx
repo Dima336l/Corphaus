@@ -8,9 +8,11 @@ const MessagesPage = () => {
   const { user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const [conversations, setConversations] = useState([]);
+  const [filteredConversations, setFilteredConversations] = useState([]);
   const [selectedThread, setSelectedThread] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Check if there's a thread in URL params
   const threadParam = searchParams.get('thread');
@@ -19,6 +21,24 @@ const MessagesPage = () => {
     loadConversations();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?._id]); // Only reload when user ID changes, not the whole user object
+
+  // Filter conversations based on search query
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setFilteredConversations(conversations);
+    } else {
+      const filtered = conversations.filter(conversation => {
+        const searchLower = searchQuery.toLowerCase();
+        return (
+          conversation.otherUser.name.toLowerCase().includes(searchLower) ||
+          conversation.otherUser.email.toLowerCase().includes(searchLower) ||
+          conversation.lastMessage.content.toLowerCase().includes(searchLower) ||
+          (conversation.relatedItem && conversation.relatedItem.title.toLowerCase().includes(searchLower))
+        );
+      });
+      setFilteredConversations(filtered);
+    }
+  }, [conversations, searchQuery]);
 
   useEffect(() => {
     if (threadParam && conversations.length > 0) {
@@ -44,6 +64,10 @@ const MessagesPage = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSearchChange = (e) => {
+    setSearchQuery(e.target.value);
   };
 
   const handleSelectConversation = (conversation) => {
@@ -100,7 +124,8 @@ const MessagesPage = () => {
         <div className="container mx-auto">
           <h1 className="text-2xl font-bold text-gray-900">Messages</h1>
           <p className="text-sm text-gray-600">
-            {conversations.length} conversation{conversations.length !== 1 ? 's' : ''}
+            {filteredConversations.length} conversation{filteredConversations.length !== 1 ? 's' : ''}
+            {searchQuery && ` (filtered from ${conversations.length})`}
           </p>
         </div>
       </div>
@@ -113,13 +138,14 @@ const MessagesPage = () => {
             selectedThread ? 'hidden md:block' : 'block'
           } w-full md:w-96 bg-white border-r border-gray-200 flex flex-col`}
         >
-          {/* Search/Filter (future enhancement) */}
+          {/* Search/Filter */}
           <div className="p-4 border-b border-gray-200">
             <input
               type="text"
               placeholder="Search messages..."
+              value={searchQuery}
+              onChange={handleSearchChange}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              disabled
             />
           </div>
 
@@ -144,7 +170,7 @@ const MessagesPage = () => {
               </div>
             )}
 
-            {!loading && !error && conversations.length === 0 && (
+            {!loading && !error && filteredConversations.length === 0 && conversations.length === 0 && (
               <div className="p-8 text-center">
                 <svg
                   className="w-20 h-20 mx-auto text-gray-300 mb-4"
@@ -174,9 +200,39 @@ const MessagesPage = () => {
               </div>
             )}
 
+            {!loading && !error && filteredConversations.length === 0 && conversations.length > 0 && (
+              <div className="p-8 text-center">
+                <svg
+                  className="w-16 h-16 mx-auto text-gray-300 mb-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  />
+                </svg>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  No conversations found
+                </h3>
+                <p className="text-gray-600 mb-4">
+                  Try adjusting your search terms
+                </p>
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="text-blue-600 hover:text-blue-700 underline"
+                >
+                  Clear search
+                </button>
+              </div>
+            )}
+
             {!loading &&
               !error &&
-              conversations.map((conversation) => (
+              filteredConversations.map((conversation) => (
                 <div
                   key={conversation.threadId}
                   onClick={() => handleSelectConversation(conversation)}
