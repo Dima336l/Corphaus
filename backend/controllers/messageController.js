@@ -102,6 +102,10 @@ export const getConversations = async (req, res) => {
     const formattedConversations = conversations.map(conv => {
       const lastMsg = conv.lastMessage;
       
+      // Debug: Log the relatedProperty data
+      console.log('DEBUG - lastMsg.relatedProperty:', lastMsg.relatedProperty);
+      console.log('DEBUG - lastMsg.relatedWantedAd:', lastMsg.relatedWantedAd);
+      
       // Safety check
       if (!lastMsg || !lastMsg.sender || !lastMsg.recipient) {
         console.error('Invalid message in conversation:', conv);
