@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { PaidFeatureGate } from '../components/PaidFeatureGate';
 import { propertiesAPI, messagesAPI } from '../utils/api';
 import { useAuth } from '../contexts/AuthContext';
+import ComposeMessageModal from '../components/ComposeMessageModal';
 import { 
   MapPin, 
   Home, 
@@ -27,7 +28,7 @@ export const PropertyDetailPage = () => {
   const [property, setProperty] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [sendingMessage, setSendingMessage] = useState(false);
+  const [showMessageModal, setShowMessageModal] = useState(false);
 
   useEffect(() => {
     const fetchProperty = async () => {
@@ -51,7 +52,7 @@ export const PropertyDetailPage = () => {
     fetchProperty();
   }, [id, navigate]);
 
-  const handleSendMessage = async () => {
+  const handleOpenMessageModal = () => {
     if (!user) {
       // Redirect to login if not authenticated
       navigate('/login');
@@ -69,22 +70,16 @@ export const PropertyDetailPage = () => {
       return;
     }
 
-    // Prompt user for their message
-    const defaultMessage = `Hi, I'm interested in your property: ${property.propertyType} at ${property.streetAddress}, ${property.postcode}`;
-    const userMessage = window.prompt('Enter your message to the landlord:', defaultMessage);
+    // Open the message modal
+    setShowMessageModal(true);
+  };
 
-    if (!userMessage || userMessage.trim() === '') {
-      // User cancelled or entered empty message
-      return;
-    }
-
-    setSendingMessage(true);
-
+  const handleSendMessage = async (messageContent) => {
     try {
       // Send the user's message
       const messageData = {
         recipientId: property.userId,
-        content: userMessage.trim(),
+        content: messageContent,
         relatedPropertyId: property._id
       };
 
@@ -96,8 +91,7 @@ export const PropertyDetailPage = () => {
     } catch (err) {
       console.error('Failed to send message:', err);
       alert('Failed to send message. Please try again.');
-    } finally {
-      setSendingMessage(false);
+      throw err; // Re-throw so modal can handle it
     }
   };
 
@@ -322,21 +316,12 @@ export const PropertyDetailPage = () => {
                   </div>
 
                   <button
-                    onClick={handleSendMessage}
-                    disabled={sendingMessage || !user}
+                    onClick={handleOpenMessageModal}
+                    disabled={!user}
                     className="w-full btn-primary mt-4 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
-                    {sendingMessage ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                        Sending...
-                      </>
-                    ) : (
-                      <>
-                        <Mail className="w-4 h-4" />
-                        {user ? 'Send Message' : 'Log in to Message'}
-                      </>
-                    )}
+                    <Mail className="w-4 h-4" />
+                    {user ? 'Send Message' : 'Log in to Message'}
                   </button>
                 </div>
               </PaidFeatureGate>
@@ -350,6 +335,15 @@ export const PropertyDetailPage = () => {
           </div>
         </div>
       </div>
+
+      {/* Compose Message Modal */}
+      <ComposeMessageModal
+        isOpen={showMessageModal}
+        onClose={() => setShowMessageModal(false)}
+        onSend={handleSendMessage}
+        recipientName={property?.landlordName || 'Landlord'}
+        defaultMessage={`Hi, I'm interested in your property: ${property?.propertyType} at ${property?.streetAddress}, ${property?.postcode}`}
+      />
     </div>
   );
 };

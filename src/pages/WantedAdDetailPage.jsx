@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { PaidFeatureGate } from '../components/PaidFeatureGate';
 import { wantedAdsAPI, messagesAPI } from '../utils/api';
 import { useAuth } from '../contexts/AuthContext';
+import ComposeMessageModal from '../components/ComposeMessageModal';
 import { 
   MapPin, 
   Briefcase, 
@@ -21,7 +22,7 @@ export const WantedAdDetailPage = () => {
   const [ad, setAd] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [sendingMessage, setSendingMessage] = useState(false);
+  const [showMessageModal, setShowMessageModal] = useState(false);
 
   useEffect(() => {
     const fetchAd = async () => {
@@ -45,7 +46,7 @@ export const WantedAdDetailPage = () => {
     fetchAd();
   }, [id, navigate]);
 
-  const handleSendMessage = async () => {
+  const handleOpenMessageModal = () => {
     if (!user) {
       // Redirect to login if not authenticated
       navigate('/login');
@@ -63,22 +64,16 @@ export const WantedAdDetailPage = () => {
       return;
     }
 
-    // Prompt user for their message
-    const defaultMessage = `Hi, I'm interested in your wanted ad: ${ad.companyName} looking for ${ad.businessType} in ${ad.preferredLocation}`;
-    const userMessage = window.prompt('Enter your message to the business:', defaultMessage);
+    // Open the message modal
+    setShowMessageModal(true);
+  };
 
-    if (!userMessage || userMessage.trim() === '') {
-      // User cancelled or entered empty message
-      return;
-    }
-
-    setSendingMessage(true);
-
+  const handleSendMessage = async (messageContent) => {
     try {
       // Send the user's message
       const messageData = {
         recipientId: ad.userId,
-        content: userMessage.trim(),
+        content: messageContent,
         relatedWantedAdId: ad._id
       };
 
@@ -90,8 +85,7 @@ export const WantedAdDetailPage = () => {
     } catch (err) {
       console.error('Failed to send message:', err);
       alert('Failed to send message. Please try again.');
-    } finally {
-      setSendingMessage(false);
+      throw err; // Re-throw so modal can handle it
     }
   };
 
@@ -331,21 +325,12 @@ export const WantedAdDetailPage = () => {
                   </div>
 
                   <button
-                    onClick={handleSendMessage}
-                    disabled={sendingMessage || !user}
+                    onClick={handleOpenMessageModal}
+                    disabled={!user}
                     className="w-full btn-primary mt-4 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
-                    {sendingMessage ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                        Sending...
-                      </>
-                    ) : (
-                      <>
-                        <Mail className="w-4 h-4" />
-                        {user ? 'Send Message' : 'Log in to Message'}
-                      </>
-                    )}
+                    <Mail className="w-4 h-4" />
+                    {user ? 'Send Message' : 'Log in to Message'}
                   </button>
                 </div>
               </PaidFeatureGate>
@@ -365,6 +350,15 @@ export const WantedAdDetailPage = () => {
           </div>
         </div>
       </div>
+
+      {/* Compose Message Modal */}
+      <ComposeMessageModal
+        isOpen={showMessageModal}
+        onClose={() => setShowMessageModal(false)}
+        onSend={handleSendMessage}
+        recipientName={ad?.companyName || 'Business'}
+        defaultMessage={`Hi, I'm interested in your wanted ad: ${ad?.companyName} looking for ${ad?.businessType} in ${ad?.preferredLocation}`}
+      />
     </div>
   );
 };
