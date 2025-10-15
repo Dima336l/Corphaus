@@ -99,7 +99,7 @@ export const getConversations = async (req, res) => {
     console.log('Found conversations:', conversations.length);
 
     // Format response to include other participant info
-    const formattedConversations = conversations.map(conv => {
+    const formattedConversations = await Promise.all(conversations.map(async (conv) => {
       const lastMsg = conv.lastMessage;
       
       // Debug: Log the relatedProperty data
@@ -159,12 +159,15 @@ export const getConversations = async (req, res) => {
         relatedItemType: lastMsg.relatedProperty ? 'property' : lastMsg.relatedWantedAd ? 'wantedAd' : null,
         unreadCount: conv.unreadCount
       };
-    }).filter(conv => conv !== null); // Filter out invalid conversations
+    }));
+    
+    // Filter out invalid conversations
+    const validConversations = formattedConversations.filter(conv => conv !== null);
 
     res.json({
       success: true,
-      count: formattedConversations.length,
-      data: formattedConversations
+      count: validConversations.length,
+      data: validConversations
     });
   } catch (error) {
     console.error('Get conversations error:', error);
