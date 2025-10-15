@@ -52,8 +52,14 @@ export const WantedAdDetailPage = () => {
       return;
     }
 
-    if (!ad?.business?._id) {
+    if (!ad?.userId) {
       alert('Unable to contact business at this time.');
+      return;
+    }
+
+    // Don't let user message themselves
+    if (ad.userId === user._id) {
+      alert("You can't send a message to yourself!");
       return;
     }
 
@@ -62,7 +68,7 @@ export const WantedAdDetailPage = () => {
     try {
       // Send initial message
       const messageData = {
-        recipientId: ad.business._id,
+        recipientId: ad.userId,
         content: `Hi, I'm interested in your wanted ad: ${ad.companyName} looking for ${ad.businessType} in ${ad.preferredLocation}`,
         relatedWantedAdId: ad._id
       };

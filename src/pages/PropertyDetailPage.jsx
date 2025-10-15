@@ -58,8 +58,14 @@ export const PropertyDetailPage = () => {
       return;
     }
 
-    if (!property?.landlord?._id) {
+    if (!property?.userId) {
       alert('Unable to contact landlord at this time.');
+      return;
+    }
+
+    // Don't let user message themselves
+    if (property.userId === user._id) {
+      alert("You can't send a message to yourself!");
       return;
     }
 
@@ -68,7 +74,7 @@ export const PropertyDetailPage = () => {
     try {
       // Send initial message
       const messageData = {
-        recipientId: property.landlord._id,
+        recipientId: property.userId,
         content: `Hi, I'm interested in your property: ${property.propertyType} at ${property.streetAddress}, ${property.postcode}`,
         relatedPropertyId: property._id
       };
