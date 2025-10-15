@@ -84,7 +84,7 @@ messageSchema.statics.getConversations = async function(userId) {
     .sort({ createdAt: -1 })
     .populate('sender', 'name email role')
     .populate('recipient', 'name email role')
-    .populate('relatedProperty', 'title address price')
+    .populate('relatedProperty', 'propertyType streetAddress postcode desiredRent')
     .populate('relatedWantedAd', 'title location budget');
 
     // Group by threadId and get the most recent message per thread

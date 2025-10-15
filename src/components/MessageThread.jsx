@@ -236,6 +236,12 @@ const MessageThread = ({ thread, onBack, onMessageSent }) => {
         {/* Related item */}
         {thread.relatedItem && (
           <div className="mt-3 p-2 bg-gray-50 rounded-lg border border-gray-200">
+            {/* Debug info - remove in production */}
+            {process.env.NODE_ENV === 'development' && (
+              <div className="text-xs text-gray-400 mb-2">
+                Debug: {JSON.stringify(thread.relatedItem, null, 2)}
+              </div>
+            )}
             <p className="text-xs text-gray-500 mb-1">
               {thread.relatedItemType === 'property' ? 'Property:' : 'Wanted Ad:'}
             </p>
@@ -248,8 +254,8 @@ const MessageThread = ({ thread, onBack, onMessageSent }) => {
               className="text-sm font-medium text-blue-600 hover:underline"
             >
               {thread.relatedItemType === 'property' 
-                ? `${thread.relatedItem.propertyType} Property`
-                : thread.relatedItem.title
+                ? `${thread.relatedItem.propertyType || 'Property'}`
+                : thread.relatedItem.title || 'Wanted Ad'
               }
             </Link>
             {thread.relatedItem.streetAddress && (
