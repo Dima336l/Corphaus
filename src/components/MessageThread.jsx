@@ -236,12 +236,15 @@ const MessageThread = ({ thread, onBack, onMessageSent }) => {
         {/* Related item */}
         {thread.relatedItem && (
           <div className="mt-3 p-2 bg-gray-50 rounded-lg border border-gray-200">
-            {/* Debug info - remove in production */}
-            {process.env.NODE_ENV === 'development' && (
-              <div className="text-xs text-gray-400 mb-2">
-                Debug: {JSON.stringify(thread.relatedItem, null, 2)}
-              </div>
-            )}
+            {/* Debug info - always show for now */}
+            <div className="text-xs text-red-500 mb-2 p-2 bg-yellow-100 rounded">
+              <strong>Debug Info:</strong><br/>
+              relatedItem: {JSON.stringify(thread.relatedItem, null, 2)}<br/>
+              relatedItemType: {thread.relatedItemType}<br/>
+              streetAddress: "{thread.relatedItem.streetAddress}"<br/>
+              postcode: "{thread.relatedItem.postcode}"<br/>
+              propertyType: "{thread.relatedItem.propertyType}"
+            </div>
             <p className="text-xs text-gray-500 mb-1">
               {thread.relatedItemType === 'property' ? 'Property:' : 'Wanted Ad:'}
             </p>
