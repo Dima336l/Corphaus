@@ -139,14 +139,31 @@ const MessagesPage = () => {
           } w-full md:w-96 bg-white border-r border-gray-200 flex flex-col`}
         >
           {/* Search/Filter */}
-          <div className="p-4 border-b border-gray-200">
-            <input
-              type="text"
-              placeholder="Search messages..."
-              value={searchQuery}
-              onChange={handleSearchChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
+          <div className="p-4 border-b border-gray-200 bg-white">
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+              <input
+                type="text"
+                placeholder="Search conversations..."
+                value={searchQuery}
+                onChange={handleSearchChange}
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 focus:bg-white transition-colors"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+                >
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Conversations */}
@@ -236,21 +253,28 @@ const MessagesPage = () => {
                 <div
                   key={conversation.threadId}
                   onClick={() => handleSelectConversation(conversation)}
-                  className={`p-4 border-b border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors ${
+                  className={`p-4 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-all duration-200 ${
                     selectedThread?.threadId === conversation.threadId
-                      ? 'bg-blue-50 border-l-4 border-l-blue-600'
-                      : ''
+                      ? 'bg-blue-50 border-l-4 border-l-blue-600 shadow-sm'
+                      : 'hover:shadow-sm'
                   }`}
                 >
                   <div className="flex items-start gap-3">
                     {/* Avatar */}
-                    <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold flex-shrink-0">
-                      {conversation.otherUser.name.charAt(0).toUpperCase()}
+                    <div className="relative">
+                      <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold flex-shrink-0 shadow-sm">
+                        {conversation.otherUser.name.charAt(0).toUpperCase()}
+                      </div>
+                      {conversation.unreadCount > 0 && (
+                        <div className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-bold">
+                          {conversation.unreadCount}
+                        </div>
+                      )}
                     </div>
 
                     {/* Content */}
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-2 mb-1">
+                      <div className="flex items-start justify-between gap-2 mb-2">
                         <h3 className="font-semibold text-gray-900 truncate">
                           {conversation.otherUser.name}
                         </h3>
@@ -259,21 +283,34 @@ const MessagesPage = () => {
                         </span>
                       </div>
 
-                      <p className="text-sm text-gray-600 mb-1 flex items-center gap-1">
+                      <div className="flex items-center gap-2 mb-2">
                         <span
-                          className={`inline-block w-2 h-2 rounded-full ${
+                          className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
                             conversation.otherUser.role === 'Landlord'
-                              ? 'bg-blue-500'
-                              : 'bg-purple-500'
+                              ? 'bg-blue-100 text-blue-700'
+                              : 'bg-purple-100 text-purple-700'
                           }`}
-                        ></span>
-                        {conversation.otherUser.role}
-                      </p>
+                        >
+                          <span
+                            className={`w-2 h-2 rounded-full ${
+                              conversation.otherUser.role === 'Landlord'
+                                ? 'bg-blue-500'
+                                : 'bg-purple-500'
+                            }`}
+                          ></span>
+                          {conversation.otherUser.role}
+                        </span>
+                      </div>
 
                       {conversation.relatedItem && (
-                        <p className="text-xs text-gray-500 mb-1 truncate">
-                          Re: {conversation.relatedItem.title}
-                        </p>
+                        <div className="mb-2">
+                          <span className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 text-gray-600 text-xs font-medium rounded-full">
+                            🏠 {conversation.relatedItem.streetAddress ? 
+                              `${conversation.relatedItem.streetAddress}, ${conversation.relatedItem.postcode}` : 
+                              conversation.relatedItem.title || 'Property'
+                            }
+                          </span>
+                        </div>
                       )}
 
                       <p
@@ -288,14 +325,6 @@ const MessagesPage = () => {
                         )}
                         {conversation.lastMessage.content}
                       </p>
-
-                      {conversation.unreadCount > 0 && (
-                        <div className="mt-2">
-                          <span className="inline-block bg-blue-600 text-white text-xs px-2 py-0.5 rounded-full">
-                            {conversation.unreadCount} new
-                          </span>
-                        </div>
-                      )}
                     </div>
                   </div>
                 </div>

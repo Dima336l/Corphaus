@@ -235,40 +235,58 @@ const MessageThread = ({ thread, onBack, onMessageSent }) => {
 
         {/* Related item */}
         {thread.relatedItem && (
-          <div className="mt-3 p-2 bg-gray-50 rounded-lg border border-gray-200">
-            <p className="text-xs text-gray-500 mb-1">
-              {thread.relatedItemType === 'property' ? 'Property:' : 'Wanted Ad:'}
-            </p>
-            <Link
-              to={
-                thread.relatedItemType === 'property'
-                  ? `/properties/${thread.relatedItem._id}`
-                  : `/wanted-ads/${thread.relatedItem._id}`
-              }
-              className="text-sm font-medium text-blue-600 hover:underline"
-            >
-              {thread.relatedItemType === 'property' 
-                ? (thread.relatedItem.streetAddress && thread.relatedItem.postcode 
-                    ? `${thread.relatedItem.streetAddress}, ${thread.relatedItem.postcode}`
-                    : thread.relatedItem.propertyType || 'Property')
-                : thread.relatedItem.title || 'Wanted Ad'
-              }
-            </Link>
-            {thread.relatedItem.desiredRent && (
-              <p className="text-xs text-gray-600 mt-1">
-                💰 £{thread.relatedItem.desiredRent}
-              </p>
-            )}
-            {thread.relatedItem.location && (
-              <p className="text-xs text-gray-600 mt-1">
-                📍 {thread.relatedItem.location}
-              </p>
-            )}
-            {thread.relatedItem.desiredRent && (
-              <p className="text-xs text-gray-600 mt-1">
-                💰 £{thread.relatedItem.desiredRent}
-              </p>
-            )}
+          <div className="mt-3 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200 shadow-sm">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                  <span className="text-xs font-medium text-blue-700 uppercase tracking-wide">
+                    {thread.relatedItemType === 'property' ? 'Property' : 'Wanted Ad'}
+                  </span>
+                </div>
+                <Link
+                  to={
+                    thread.relatedItemType === 'property'
+                      ? `/properties/${thread.relatedItem._id}`
+                      : `/wanted-ads/${thread.relatedItem._id}`
+                  }
+                  className="block group"
+                >
+                  <h4 className="text-sm font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
+                    {thread.relatedItemType === 'property' 
+                      ? (thread.relatedItem.streetAddress && thread.relatedItem.postcode 
+                          ? `${thread.relatedItem.streetAddress}, ${thread.relatedItem.postcode}`
+                          : thread.relatedItem.propertyType || 'Property')
+                      : thread.relatedItem.title || 'Wanted Ad'
+                    }
+                  </h4>
+                </Link>
+                <div className="flex items-center gap-3 mt-2">
+                  {thread.relatedItem.desiredRent && (
+                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 text-xs font-medium rounded-full">
+                      💰 £{thread.relatedItem.desiredRent}/month
+                    </span>
+                  )}
+                  {thread.relatedItem.propertyType && (
+                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 text-gray-600 text-xs font-medium rounded-full">
+                      🏠 {thread.relatedItem.propertyType}
+                    </span>
+                  )}
+                </div>
+              </div>
+              <Link
+                to={
+                  thread.relatedItemType === 'property'
+                    ? `/properties/${thread.relatedItem._id}`
+                    : `/wanted-ads/${thread.relatedItem._id}`
+                }
+                className="ml-3 p-1 text-gray-400 hover:text-blue-600 transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+              </Link>
+            </div>
           </div>
         )}
       </div>
@@ -342,31 +360,39 @@ const MessageThread = ({ thread, onBack, onMessageSent }) => {
       </div>
 
       {/* Message Input */}
-      <div className="border-t border-gray-200 p-4 bg-white">
+      <div className="border-t border-gray-200 p-4 bg-white shadow-lg">
         {error && (
-          <div className="mb-3 p-2 bg-red-50 border border-red-200 rounded text-sm text-red-600">
+          <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600 flex items-center gap-2">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
             {error}
           </div>
         )}
 
-        <form onSubmit={handleSendMessage} className="flex gap-2">
-          <textarea
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-            placeholder="Type your message..."
-            rows="2"
-            className="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                handleSendMessage(e);
-              }
-            }}
-          />
+        <form onSubmit={handleSendMessage} className="flex gap-3">
+          <div className="flex-1 relative">
+            <textarea
+              value={newMessage}
+              onChange={(e) => setNewMessage(e.target.value)}
+              placeholder="Type your message..."
+              rows="2"
+              className="w-full border border-gray-300 rounded-xl px-4 py-3 pr-12 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none bg-gray-50 focus:bg-white transition-colors"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSendMessage(e);
+                }
+              }}
+            />
+            <div className="absolute bottom-2 right-2 text-xs text-gray-400">
+              {newMessage.length}/2000
+            </div>
+          </div>
           <button
             type="submit"
             disabled={!newMessage.trim() || sending}
-            className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-3 rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 shadow-lg hover:shadow-xl disabled:shadow-none"
           >
             {sending ? (
               <>
@@ -388,9 +414,15 @@ const MessageThread = ({ thread, onBack, onMessageSent }) => {
             )}
           </button>
         </form>
-        <p className="text-xs text-gray-500 mt-2">
-          Press Enter to send, Shift+Enter for new line
-        </p>
+        <div className="flex items-center justify-between mt-2 text-xs text-gray-500">
+          <span>Press Enter to send, Shift+Enter for new line</span>
+          <span className="flex items-center gap-1">
+            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Messages are end-to-end encrypted
+          </span>
+        </div>
       </div>
     </div>
   );

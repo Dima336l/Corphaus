@@ -43,7 +43,7 @@ export const Header = () => {
   };
 
   return (
-    <header className="bg-white shadow-md sticky top-0 z-50">
+    <header className="bg-white shadow-lg border-b border-gray-200 sticky top-0 z-50 backdrop-blur-sm bg-white/95">
       <nav className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           {/* Logo */}
@@ -57,22 +57,22 @@ export const Header = () => {
             {/* Guest Navigation */}
             {!isAuthenticated && (
               <>
-                <Link to="/properties" className="text-gray-700 hover:text-primary-600 font-medium transition-colors">
+                <Link to="/properties" className="text-gray-700 hover:text-blue-600 font-medium transition-colors px-3 py-2 rounded-lg hover:bg-blue-50">
                   Browse Properties
                 </Link>
-                <Link to="/wanted-ads" className="text-gray-700 hover:text-primary-600 font-medium transition-colors">
+                <Link to="/wanted-ads" className="text-gray-700 hover:text-blue-600 font-medium transition-colors px-3 py-2 rounded-lg hover:bg-blue-50">
                   Wanted Ads
                 </Link>
-                <Link to="/pricing" className="text-gray-700 hover:text-primary-600 font-medium transition-colors">
+                <Link to="/pricing" className="text-gray-700 hover:text-blue-600 font-medium transition-colors px-3 py-2 rounded-lg hover:bg-blue-50">
                   Pricing
                 </Link>
-                <Link to="/contact" className="text-gray-700 hover:text-primary-600 font-medium transition-colors">
+                <Link to="/contact" className="text-gray-700 hover:text-blue-600 font-medium transition-colors px-3 py-2 rounded-lg hover:bg-blue-50">
                   Contact
                 </Link>
-                <Link to="/login" className="text-gray-700 hover:text-primary-600 font-medium transition-colors">
+                <Link to="/login" className="text-gray-700 hover:text-blue-600 font-medium transition-colors px-3 py-2 rounded-lg hover:bg-blue-50">
                   Log In
                 </Link>
-                <Link to="/signup" className="btn-primary">
+                <Link to="/signup" className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-2 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-lg hover:shadow-xl">
                   Sign Up
                 </Link>
               </>
@@ -81,46 +81,50 @@ export const Header = () => {
             {/* Landlord Navigation */}
             {isAuthenticated && user?.role === 'landlord' && (
               <>
-                <Link to="/wanted-ads" className="flex items-center space-x-1 text-gray-700 hover:text-primary-600 font-medium transition-colors">
+                <Link to="/wanted-ads" className="flex items-center space-x-2 text-gray-700 hover:text-blue-600 font-medium transition-colors px-3 py-2 rounded-lg hover:bg-blue-50">
                   <Briefcase className="w-4 h-4" />
                   <span>Browse Wanted Ads</span>
                 </Link>
-                <Link to="/landlord/add-property" className="flex items-center space-x-1 text-gray-700 hover:text-primary-600 font-medium transition-colors">
+                <Link to="/landlord/add-property" className="flex items-center space-x-2 text-gray-700 hover:text-blue-600 font-medium transition-colors px-3 py-2 rounded-lg hover:bg-blue-50">
                   <PlusCircle className="w-4 h-4" />
                   <span>List Property</span>
                 </Link>
-                <Link to="/messages" className="flex items-center space-x-1 text-gray-700 hover:text-primary-600 font-medium transition-colors relative">
+                <Link to="/messages" className="flex items-center space-x-2 text-gray-700 hover:text-blue-600 font-medium transition-colors relative px-3 py-2 rounded-lg hover:bg-blue-50">
                   <MessageCircle className="w-4 h-4" />
                   <span>Messages</span>
                   {unreadCount > 0 && (
-                    <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-semibold">
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-semibold">
                       {unreadCount > 9 ? '9+' : unreadCount}
                     </span>
                   )}
                 </Link>
-                <Link to="/landlord/dashboard" className="flex items-center space-x-1 text-gray-700 hover:text-primary-600 font-medium transition-colors">
+                <Link to="/landlord/dashboard" className="flex items-center space-x-2 text-gray-700 hover:text-blue-600 font-medium transition-colors px-3 py-2 rounded-lg hover:bg-blue-50">
                   <LayoutDashboard className="w-4 h-4" />
                   <span>Dashboard</span>
                 </Link>
-                <Link to="/pricing" className="text-gray-700 hover:text-primary-600 font-medium transition-colors">
+                <Link to="/pricing" className="text-gray-700 hover:text-blue-600 font-medium transition-colors px-3 py-2 rounded-lg hover:bg-blue-50">
                   Pricing
                 </Link>
-                <div className="flex items-center space-x-2">
-                  <div className="flex items-center space-x-2 px-3 py-2 bg-primary-50 rounded-lg border border-primary-200">
-                    <Home className="w-4 h-4 text-primary-600" />
-                    <span className="text-sm text-gray-700 font-medium">{user?.name}</span>
-                    <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded-full font-semibold">
-                      Landlord
-                    </span>
-                    {user?.isPaid && (
-                      <span className="px-2 py-0.5 bg-primary-600 text-white text-xs rounded-full">
-                        Pro
+                <div className="flex items-center space-x-3">
+                  <div className="flex items-center space-x-3 px-4 py-2 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200 shadow-sm">
+                    <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold text-sm">
+                      {user?.name?.charAt(0).toUpperCase()}
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <span className="text-sm text-gray-700 font-medium">{user?.name}</span>
+                      <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full font-semibold">
+                        Landlord
                       </span>
-                    )}
+                      {user?.isPaid && (
+                        <span className="px-2 py-1 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-xs rounded-full font-semibold shadow-sm">
+                          Pro
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <button
                     onClick={handleLogout}
-                    className="flex items-center space-x-1 text-red-600 hover:text-red-700 font-medium transition-colors"
+                    className="flex items-center space-x-2 text-red-600 hover:text-red-700 font-medium transition-colors px-3 py-2 rounded-lg hover:bg-red-50"
                   >
                     <LogOut className="w-4 h-4" />
                     <span>Logout</span>
