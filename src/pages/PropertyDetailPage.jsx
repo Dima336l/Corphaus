@@ -64,6 +64,12 @@ export const PropertyDetailPage = () => {
       return;
     }
 
+    // Check if this is a real user (not marketplace/seed data)
+    if (property.userId === 'marketplace' || property.userId.length < 20) {
+      alert('This is a marketplace listing. Messaging is only available for user-owned properties.');
+      return;
+    }
+
     // Don't let user message themselves
     if (property.userId === user._id) {
       alert("You can't send a message to yourself!");
@@ -82,6 +88,13 @@ export const PropertyDetailPage = () => {
         content: messageContent,
         relatedPropertyId: property._id
       };
+
+      // Debug logging
+      console.log('Sending message:', {
+        messageData,
+        userId: user._id,
+        property: property
+      });
 
       const response = await messagesAPI.send(messageData, user._id);
       

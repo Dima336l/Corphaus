@@ -8,10 +8,18 @@ import WantedAd from '../models/WantedAd.js';
 // @access  Private
 export const sendMessage = async (req, res) => {
   try {
+    // DEBUG: Log what we receive
+    console.log('=== SEND MESSAGE DEBUG ===');
+    console.log('Headers:', req.headers);
+    console.log('Body:', req.body);
+    console.log('User from middleware:', req.user);
+    console.log('========================');
+    
     const { recipientId, content, relatedPropertyId, relatedWantedAdId } = req.body;
 
     // Validation
     if (!recipientId || !content) {
+      console.log('VALIDATION FAILED - recipientId:', recipientId, 'content:', content);
       return res.status(400).json({ message: 'Recipient and message content are required' });
     }
 
@@ -86,11 +94,20 @@ export const sendMessage = async (req, res) => {
 // @access  Private
 export const getConversations = async (req, res) => {
   try {
+    console.log('Getting conversations for user:', req.user._id);
     const conversations = await Message.getConversations(req.user._id);
+    console.log('Found conversations:', conversations.length);
 
     // Format response to include other participant info
     const formattedConversations = conversations.map(conv => {
       const lastMsg = conv.lastMessage;
+      
+      // Safety check
+      if (!lastMsg || !lastMsg.sender || !lastMsg.recipient) {
+        console.error('Invalid message in conversation:', conv);
+        return null;
+      }
+      
       const otherUser = lastMsg.sender._id.toString() === req.user._id.toString()
         ? lastMsg.recipient
         : lastMsg.sender;
@@ -113,7 +130,7 @@ export const getConversations = async (req, res) => {
         relatedItemType: lastMsg.relatedProperty ? 'property' : lastMsg.relatedWantedAd ? 'wantedAd' : null,
         unreadCount: conv.unreadCount
       };
-    });
+    }).filter(conv => conv !== null); // Filter out invalid conversations
 
     res.json({
       success: true,

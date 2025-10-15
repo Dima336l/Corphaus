@@ -58,6 +58,12 @@ export const WantedAdDetailPage = () => {
       return;
     }
 
+    // Check if this is a real user (not marketplace/seed data)
+    if (ad.userId === 'marketplace' || ad.userId.length < 20) {
+      alert('This is a marketplace listing. Messaging is only available for user-owned wanted ads.');
+      return;
+    }
+
     // Don't let user message themselves
     if (ad.userId === user._id) {
       alert("You can't send a message to yourself!");

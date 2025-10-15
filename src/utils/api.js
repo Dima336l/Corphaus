@@ -5,13 +5,29 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://corphaus-backend.o
 const apiRequest = async (endpoint, options = {}) => {
   const url = `${API_BASE_URL}${endpoint}`;
   
-  const config = {
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
-    ...options,
+  // Ensure Content-Type is always set for requests with body
+  const headers = {
+    ...options.headers,
   };
+  
+  // Always add Content-Type for POST/PUT/PATCH requests
+  if (options.method && ['POST', 'PUT', 'PATCH'].includes(options.method.toUpperCase())) {
+    headers['Content-Type'] = 'application/json';
+  }
+  
+  const config = {
+    ...options,
+    headers,
+  };
+
+  // DEBUG: Log the full request
+  console.log('API Request:', {
+    url,
+    method: config.method || 'GET',
+    headers: config.headers,
+    body: config.body,
+    bodyParsed: config.body ? JSON.parse(config.body) : null
+  });
 
   try {
     const response = await fetch(url, config);
