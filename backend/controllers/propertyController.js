@@ -10,6 +10,7 @@ export const getAllProperties = async (req, res) => {
       businessModel, 
       minBedrooms, 
       postcode,
+      search,
       hasParking,
       wheelchairAccessible,
       furnished 
@@ -19,9 +20,21 @@ export const getAllProperties = async (req, res) => {
     let filter = { isActive: true };
     
     if (propertyType) filter.propertyType = propertyType;
+    // MongoDB will match if the array contains the businessModel value
     if (businessModel) filter.businessModels = businessModel;
     if (minBedrooms) filter.bedrooms = { $gte: parseInt(minBedrooms) };
-    if (postcode) filter.postcode = new RegExp(postcode, 'i');
+    
+    // Search by postcode or street address (or both)
+    if (search) {
+      filter.$or = [
+        { postcode: new RegExp(search, 'i') },
+        { streetAddress: new RegExp(search, 'i') }
+      ];
+    } else if (postcode) {
+      // Legacy support for postcode parameter
+      filter.postcode = new RegExp(postcode, 'i');
+    }
+    
     if (hasParking === 'true') filter.hasParking = true;
     if (wheelchairAccessible === 'true') filter.wheelchairAccessible = true;
     if (furnished === 'true') filter.furnished = true;
@@ -82,6 +95,44 @@ export const createProperty = async (req, res) => {
       userId: req.userId
     };
     
+    // Validate required fields
+    if (!propertyData.userId) {
+      return res.status(400).json({
+        success: false,
+        message: 'User ID is required',
+        error: 'Authentication required'
+      });
+    }
+    
+    if (!propertyData.landlordName || !propertyData.landlordEmail) {
+      return res.status(400).json({
+        success: false,
+        message: 'Landlord name and email are required',
+        error: 'Missing landlord information'
+      });
+    }
+    
+    if (!propertyData.propertyType || !propertyData.streetAddress || !propertyData.postcode || !propertyData.useClass) {
+      return res.status(400).json({
+        success: false,
+        message: 'Property type, address, postcode, and use class are required',
+        error: 'Missing required property information'
+      });
+    }
+    
+    // Ensure businessModels is an array
+    if (!Array.isArray(propertyData.businessModels)) {
+      propertyData.businessModels = [];
+    }
+    
+    // Ensure numbers are properly formatted
+    if (propertyData.bedrooms) propertyData.bedrooms = parseInt(propertyData.bedrooms) || 0;
+    if (propertyData.enSuites) propertyData.enSuites = parseInt(propertyData.enSuites) || 0;
+    if (propertyData.studioRooms) propertyData.studioRooms = parseInt(propertyData.studioRooms) || 0;
+    if (propertyData.kitchens) propertyData.kitchens = parseInt(propertyData.kitchens) || 0;
+    if (propertyData.receptionRooms) propertyData.receptionRooms = parseInt(propertyData.receptionRooms) || 0;
+    if (propertyData.hmoLicenceFor) propertyData.hmoLicenceFor = parseInt(propertyData.hmoLicenceFor) || 0;
+    
     const property = await Property.create(propertyData);
     
     res.status(201).json({
@@ -90,10 +141,33 @@ export const createProperty = async (req, res) => {
       data: property
     });
   } catch (error) {
+    console.error('Error creating property:', error);
+    console.error('Request body:', req.body);
+    console.error('User ID:', req.userId);
+    console.error('Error name:', error.name);
+    console.error('Error message:', error.message);
+    
+    // Handle Mongoose validation errors
+    if (error.name === 'ValidationError') {
+      const validationErrors = Object.values(error.errors).map(err => ({
+        field: err.path,
+        message: err.message,
+        value: err.value
+      }));
+      console.error('Validation errors:', validationErrors);
+      return res.status(400).json({
+        success: false,
+        message: 'Validation error',
+        error: error.message,
+        details: validationErrors
+      });
+    }
+    
     res.status(400).json({
       success: false,
       message: 'Error creating property',
-      error: error.message
+      error: error.message,
+      errorName: error.name
     });
   }
 };

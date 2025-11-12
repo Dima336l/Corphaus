@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { propertiesAPI } from '../utils/api';
 import { 
   propertyTypes, 
   useClasses, 
@@ -45,6 +46,7 @@ export const AddPropertyPage = () => {
   });
 
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -63,48 +65,108 @@ export const AddPropertyPage = () => {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setLoading(true);
 
     // Validation
     if (!formData.propertyType || !formData.streetAddress || !formData.postcode) {
       setError('Please fill in all required fields');
+      setLoading(false);
       return;
     }
 
     if (formData.businessModels.length === 0) {
       setError('Please select at least one business model');
+      setLoading(false);
       return;
     }
 
-    // Check if user has reached free listing limit
-    const existingListings = JSON.parse(localStorage.getItem('corphaus_properties') || '[]');
-    const userListings = existingListings.filter(l => l.userId === user?.id);
-    
-    if (!isPaid && userListings.length >= 1) {
-      if (!window.confirm('Free users can only post one listing. Upgrade to a paid plan for unlimited listings. Redirect to pricing page?')) {
+    if (!user) {
+      setError('You must be logged in to list a property');
+      setLoading(false);
+      navigate('/login');
+      return;
+    }
+
+    try {
+      // Check if user has reached free listing limit by fetching their properties from API
+      if (!isPaid) {
+        try {
+          const myListingsResponse = await propertiesAPI.getMyListings(user.id);
+          const userListings = myListingsResponse.data || [];
+          
+          if (userListings.length >= 1) {
+            setError('Free users can only post one listing. Please upgrade to Pro for unlimited listings.');
+            setLoading(false);
+            setTimeout(() => {
+              navigate('/pricing');
+            }, 2000);
+            return;
+          }
+        } catch (err) {
+          // If API call fails, we'll still try to create the property
+          // The backend will handle the limit check
+          console.warn('Could not check existing listings:', err);
+        }
+      }
+
+      // Validate user has required fields
+      if (!user.name || !user.email) {
+        setError('User profile is incomplete. Please ensure you have a name and email.');
+        setLoading(false);
         return;
       }
-      navigate('/pricing');
-      return;
+
+      // Prepare property data
+      const propertyData = {
+        landlordName: user.name,
+        landlordEmail: user.email,
+        ...formData,
+        // Convert numbers to integers
+        bedrooms: parseInt(formData.bedrooms) || 0,
+        enSuites: parseInt(formData.enSuites) || 0,
+        studioRooms: parseInt(formData.studioRooms) || 0,
+        kitchens: parseInt(formData.kitchens) || 0,
+        receptionRooms: parseInt(formData.receptionRooms) || 0,
+        hmoLicenceFor: parseInt(formData.hmoLicenceFor) || 0,
+      };
+
+      // Validate required fields are present
+      if (!propertyData.useClass) {
+        setError('Please select a use class for the property.');
+        setLoading(false);
+        return;
+      }
+
+      console.log('Creating property with data:', propertyData);
+      console.log('User ID:', user.id || user._id);
+
+      // Save property via API
+      const userId = user.id || user._id;
+      if (!userId) {
+        setError('User ID is missing. Please log out and log back in.');
+        setLoading(false);
+        return;
+      }
+
+      const response = await propertiesAPI.create(propertyData, userId);
+      
+      if (response.success) {
+        navigate('/landlord/dashboard');
+      } else {
+        setError(response.message || 'Failed to create property listing');
+      }
+    } catch (err) {
+      console.error('Error creating property:', err);
+      // Display more detailed error message
+      const errorMessage = err.message || 'Failed to create property listing. Please try again.';
+      setError(errorMessage);
+      console.error('Full error details:', err);
+    } finally {
+      setLoading(false);
     }
-
-    // Save property
-    const newProperty = {
-      id: Math.random().toString(36).substr(2, 9),
-      userId: user?.id,
-      landlordName: user?.name,
-      landlordEmail: user?.email,
-      ...formData,
-      createdAt: new Date().toISOString(),
-    };
-
-    const updatedListings = [...existingListings, newProperty];
-    localStorage.setItem('corphaus_properties', JSON.stringify(updatedListings));
-
-    alert('Property listed successfully!');
-    navigate('/landlord/dashboard');
   };
 
   return (
@@ -529,8 +591,9 @@ export const AddPropertyPage = () => {
               <button
                 type="submit"
                 className="btn-primary"
+                disabled={loading}
               >
-                List Property
+                {loading ? 'Listing...' : 'List Property'}
               </button>
             </div>
           </form>

@@ -116,14 +116,12 @@ const MessageThread = ({ thread, onBack, onMessageSent }) => {
   };
 
   const handleDeleteConversation = async () => {
-    if (window.confirm('Are you sure you want to delete this conversation? This action cannot be undone.')) {
-      try {
-        // Note: This would require a delete conversation endpoint in the backend
-        console.log('Delete conversation functionality would be implemented here');
-        setShowOptions(false);
-      } catch (err) {
-        console.error('Failed to delete conversation:', err);
-      }
+    try {
+      // Note: This would require a delete conversation endpoint in the backend
+      console.log('Delete conversation functionality would be implemented here');
+      setShowOptions(false);
+    } catch (err) {
+      console.error('Failed to delete conversation:', err);
     }
   };
 

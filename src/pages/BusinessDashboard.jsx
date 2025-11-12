@@ -47,17 +47,11 @@ export const BusinessDashboard = () => {
   }, [user]);
 
   const handleDelete = async (adId) => {
-    if (!window.confirm('Are you sure you want to delete this wanted ad?')) {
-      return;
-    }
-
     try {
       await wantedAdsAPI.delete(adId, user.id || user._id);
       setMyAds(myAds.filter((ad) => ad._id !== adId));
-      alert('Wanted ad deleted successfully!');
     } catch (error) {
       console.error('Error deleting wanted ad:', error);
-      alert('Failed to delete wanted ad. Please try again.');
     }
   };
 

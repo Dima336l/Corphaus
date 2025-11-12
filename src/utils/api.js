@@ -22,14 +22,31 @@ const apiRequest = async (endpoint, options = {}) => {
 
   try {
     const response = await fetch(url, config);
-    const data = await response.json();
+    
+    // Handle non-JSON responses
+    let data;
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+      data = await response.json();
+    } else {
+      const text = await response.text();
+      throw new Error(text || `HTTP ${response.status}: ${response.statusText}`);
+    }
 
     if (!response.ok) {
-      throw new Error(data.message || 'API request failed');
+      // Include more details in the error message
+      const errorMessage = data.message || data.error || `API request failed: ${response.status}`;
+      const errorDetails = data.details ? ` Details: ${JSON.stringify(data.details)}` : '';
+      throw new Error(`${errorMessage}${errorDetails}`);
     }
 
     return data;
   } catch (error) {
+    // Handle network errors
+    if (error instanceof TypeError && error.message === 'Failed to fetch') {
+      console.error('Network error: Unable to reach API server', error);
+      throw new Error('Unable to connect to server. Please check your connection or try again later.');
+    }
     console.error('API Error:', error);
     throw error;
   }

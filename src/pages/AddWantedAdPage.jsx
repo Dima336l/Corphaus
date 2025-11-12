@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { wantedAdsAPI } from '../utils/api';
 import { 
   propertyTypes, 
   useClasses, 
@@ -44,6 +45,7 @@ export const AddWantedAdPage = () => {
   });
 
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -53,43 +55,91 @@ export const AddWantedAdPage = () => {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setLoading(true);
 
     // Validation
     if (!formData.businessType || !formData.preferredLocation || !formData.companyName) {
       setError('Please fill in all required fields');
+      setLoading(false);
       return;
     }
 
-    // Check if user has reached free listing limit
-    const existingAds = JSON.parse(localStorage.getItem('corphaus_wanted_ads') || '[]');
-    const userAds = existingAds.filter(ad => ad.userId === user?.id);
-    
-    if (!isPaid && userAds.length >= 1) {
-      if (!window.confirm('Free users can only post one wanted ad. Upgrade to a paid plan for unlimited ads. Redirect to pricing page?')) {
+    if (!user) {
+      setError('You must be logged in to post a wanted ad');
+      setLoading(false);
+      navigate('/login');
+      return;
+    }
+
+    try {
+      // Check if user has reached free listing limit
+      if (!isPaid) {
+        try {
+          const myListingsResponse = await wantedAdsAPI.getMyListings(user.id);
+          const userAds = myListingsResponse.data || [];
+          
+          if (userAds.length >= 1) {
+            setError('Free users can only post one wanted ad. Please upgrade to Pro for unlimited ads.');
+            setLoading(false);
+            setTimeout(() => {
+              navigate('/pricing');
+            }, 2000);
+            return;
+          }
+        } catch (err) {
+          console.warn('Could not check existing listings:', err);
+        }
+      }
+
+      // Validate user has required fields
+      if (!user.name || !user.email) {
+        setError('User profile is incomplete. Please ensure you have a name and email.');
+        setLoading(false);
         return;
       }
-      navigate('/pricing');
-      return;
+
+      // Prepare wanted ad data
+      const adData = {
+        companyName: formData.companyName,
+        businessName: formData.companyName, // Model requires both, use companyName for both
+        businessEmail: user.email,
+        businessType: formData.businessType,
+        preferredLocation: formData.preferredLocation,
+        preferredPostcodes: formData.preferredPostcodes || '',
+        ...formData,
+        // Convert numbers to integers
+        minBedrooms: parseInt(formData.minBedrooms) || 0,
+        minEnSuites: parseInt(formData.minEnSuites) || 0,
+        minStudioRooms: parseInt(formData.minStudioRooms) || 0,
+        minKitchens: parseInt(formData.minKitchens) || 0,
+        minReceptionRooms: parseInt(formData.minReceptionRooms) || 0,
+        hmoLicenceFor: parseInt(formData.hmoLicenceFor) || 0,
+      };
+
+      // Save wanted ad via API
+      const userId = user.id || user._id;
+      if (!userId) {
+        setError('User ID is missing. Please log out and log back in.');
+        setLoading(false);
+        return;
+      }
+
+      const response = await wantedAdsAPI.create(adData, userId);
+      
+      if (response.success) {
+        navigate('/business/dashboard');
+      } else {
+        setError(response.message || 'Failed to create wanted ad');
+      }
+    } catch (err) {
+      console.error('Error creating wanted ad:', err);
+      setError(err.message || 'Failed to create wanted ad. Please try again.');
+    } finally {
+      setLoading(false);
     }
-
-    // Save wanted ad
-    const newAd = {
-      id: Math.random().toString(36).substr(2, 9),
-      userId: user?.id,
-      businessName: formData.companyName,
-      businessEmail: user?.email,
-      ...formData,
-      createdAt: new Date().toISOString(),
-    };
-
-    const updatedAds = [...existingAds, newAd];
-    localStorage.setItem('corphaus_wanted_ads', JSON.stringify(updatedAds));
-
-    alert('Wanted ad posted successfully!');
-    navigate('/business/dashboard');
   };
 
   return (
@@ -496,8 +546,9 @@ export const AddWantedAdPage = () => {
               <button
                 type="submit"
                 className="btn-primary"
+                disabled={loading}
               >
-                Post Wanted Ad
+                {loading ? 'Posting...' : 'Post Wanted Ad'}
               </button>
             </div>
           </form>

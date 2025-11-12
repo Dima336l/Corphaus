@@ -6,21 +6,19 @@ export const PricingPage = () => {
   const { user, isPaid, upgradeToPaid, isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
-  const handleUpgrade = () => {
+  const handleUpgrade = async () => {
     if (!isAuthenticated) {
       navigate('/signup');
       return;
     }
 
     if (isPaid) {
-      alert('You already have a Pro subscription!');
       return;
     }
 
     // Mock payment - in production this would integrate with Stripe
-    if (window.confirm('This is a demo. Proceed with mock upgrade to Pro?')) {
-      upgradeToPaid();
-      alert('Successfully upgraded to Pro! 🎉');
+    const result = await upgradeToPaid();
+    if (result?.success) {
       const dashboardPath = user?.role === 'landlord' ? '/landlord/dashboard' : '/business/dashboard';
       navigate(dashboardPath);
     }

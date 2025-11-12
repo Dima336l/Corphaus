@@ -96,7 +96,7 @@ const userSchema = new mongoose.Schema({
 });
 
 // Indexes
-userSchema.index({ email: 1 });
+// Note: email index is automatically created by unique: true, so we don't need to declare it again
 userSchema.index({ role: 1 });
 
 // Virtual for checking free plan limits

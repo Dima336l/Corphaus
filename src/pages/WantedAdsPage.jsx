@@ -2,10 +2,12 @@ import { useState, useEffect } from 'react';
 import { WantedAdCard } from '../components/WantedAdCard';
 import { Search, SlidersHorizontal, Grid, List } from 'lucide-react';
 import { businessModels, bedroomOptions } from '../data/formOptions';
+import { wantedAdsAPI } from '../utils/api';
 
 export const WantedAdsPage = () => {
   const [ads, setAds] = useState([]);
-  const [filteredAds, setFilteredAds] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [viewMode, setViewMode] = useState('grid');
   const [showFilters, setShowFilters] = useState(true);
   const [filters, setFilters] = useState({
@@ -16,39 +18,43 @@ export const WantedAdsPage = () => {
   });
 
   useEffect(() => {
-    // Load wanted ads from localStorage
-    const storedAds = JSON.parse(localStorage.getItem('corphaus_wanted_ads') || '[]');
-    setAds(storedAds);
-    setFilteredAds(storedAds);
-  }, []);
+    // Fetch wanted ads from API
+    const fetchWantedAds = async () => {
+      try {
+        setLoading(true);
+        const apiFilters = {};
+        
+        if (filters.businessType) apiFilters.businessType = filters.businessType;
+        if (filters.minBedrooms > 0) apiFilters.minBedrooms = filters.minBedrooms;
+        if (filters.wheelchairAccessible) apiFilters.wheelchairAccessible = 'true';
+        if (filters.search) apiFilters.location = filters.search;
+        
+        const response = await wantedAdsAPI.getAll(apiFilters);
+        let fetchedAds = response.data || [];
+        
+        // Apply client-side search filter if needed
+        if (filters.search) {
+          fetchedAds = fetchedAds.filter(
+            (ad) =>
+              ad.preferredLocation?.toLowerCase().includes(filters.search.toLowerCase()) ||
+              (ad.companyName || ad.businessName)?.toLowerCase().includes(filters.search.toLowerCase()) ||
+              ad.businessType?.toLowerCase().includes(filters.search.toLowerCase())
+          );
+        }
+        
+        setAds(fetchedAds);
+        setError(null);
+      } catch (err) {
+        console.error('Error fetching wanted ads:', err);
+        setError(err.message || 'Failed to load wanted ads. Please try again.');
+        setAds([]);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  useEffect(() => {
-    // Apply filters
-    let filtered = ads;
-
-    if (filters.search) {
-      filtered = filtered.filter(
-        (ad) =>
-          ad.preferredLocation?.toLowerCase().includes(filters.search.toLowerCase()) ||
-          ad.companyName?.toLowerCase().includes(filters.search.toLowerCase()) ||
-          ad.businessType?.toLowerCase().includes(filters.search.toLowerCase())
-      );
-    }
-
-    if (filters.businessType) {
-      filtered = filtered.filter((ad) => ad.businessType === filters.businessType);
-    }
-
-    if (filters.minBedrooms > 0) {
-      filtered = filtered.filter((ad) => ad.minBedrooms >= filters.minBedrooms);
-    }
-
-    if (filters.wheelchairAccessible) {
-      filtered = filtered.filter((ad) => ad.needsWheelchairAccessible);
-    }
-
-    setFilteredAds(filtered);
-  }, [filters, ads]);
+    fetchWantedAds();
+  }, [filters]);
 
   const handleFilterChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -179,8 +185,8 @@ export const WantedAdsPage = () => {
             {/* Results Header */}
             <div className="flex items-center justify-between mb-6">
               <p className="text-gray-600">
-                <span className="font-semibold text-gray-900">{filteredAds.length}</span>{' '}
-                {filteredAds.length === 1 ? 'ad' : 'ads'} found
+                <span className="font-semibold text-gray-900">{ads.length}</span>{' '}
+                {ads.length === 1 ? 'ad' : 'ads'} found
               </p>
               <div className="flex items-center space-x-2">
                 <button
@@ -207,7 +213,19 @@ export const WantedAdsPage = () => {
             </div>
 
             {/* Ads Grid/List */}
-            {filteredAds.length === 0 ? (
+            {loading ? (
+              <div className="text-center py-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-primary-600 mx-auto"></div>
+                <p className="text-gray-500 mt-4">Loading wanted ads...</p>
+              </div>
+            ) : error ? (
+              <div className="text-center py-12">
+                <p className="text-red-600 text-lg mb-4">{error}</p>
+                <button onClick={() => window.location.reload()} className="btn-primary">
+                  Try Again
+                </button>
+              </div>
+            ) : ads.length === 0 ? (
               <div className="text-center py-12">
                 <p className="text-gray-500 text-lg">No wanted ads found matching your criteria</p>
                 <button onClick={clearFilters} className="btn-primary mt-4">
@@ -222,8 +240,8 @@ export const WantedAdsPage = () => {
                     : 'space-y-4'
                 }
               >
-                {filteredAds.map((ad) => (
-                  <WantedAdCard key={ad.id} ad={ad} />
+                {ads.map((ad) => (
+                  <WantedAdCard key={ad._id || ad.id} ad={ad} />
                 ))}
               </div>
             )}

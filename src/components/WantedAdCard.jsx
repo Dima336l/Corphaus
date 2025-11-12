@@ -5,78 +5,87 @@ export const WantedAdCard = ({ ad }) => {
   return (
     <Link
       to={`/wanted-ads/${ad._id || ad.id}`}
-      className="block"
+      className="block h-full"
     >
-      <div className="flex items-start justify-between mb-3">
-        <div className="flex items-center space-x-2">
-          <div className="p-2 bg-primary-100 rounded-lg">
-            <Briefcase className="w-6 h-6 text-primary-600" />
+      <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 h-full flex flex-col hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+        {/* Header */}
+        <div className="flex items-start justify-between mb-4 pb-4 border-b border-gray-200">
+          <div className="flex items-start space-x-3 flex-1">
+            <div className="p-3 bg-primary-100 rounded-xl flex-shrink-0">
+              <Briefcase className="w-6 h-6 text-primary-600" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="text-xl font-bold text-gray-900 line-clamp-1 mb-1">
+                {ad.companyName || ad.businessName}
+              </h3>
+              <p className="text-sm font-medium text-primary-600">{ad.businessType}</p>
+            </div>
           </div>
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900 line-clamp-1">
-              {ad.companyName}
-            </h3>
-            <p className="text-sm text-gray-600">{ad.businessType}</p>
-          </div>
+          {ad.maxBudget && (
+            <div className="flex items-center text-primary-600 font-bold text-lg whitespace-nowrap ml-3">
+              <DollarSign className="w-5 h-5 mr-1" />
+              <span>£{ad.maxBudget}/mo</span>
+            </div>
+          )}
         </div>
-        {ad.maxBudget && (
-          <div className="flex items-center text-primary-600 font-bold whitespace-nowrap ml-2">
-            <DollarSign className="w-4 h-4" />
-            <span>£{ad.maxBudget}/mo</span>
-          </div>
-        )}
-      </div>
 
-      <div className="space-y-2">
-        <div className="flex items-center text-gray-600 text-sm">
-          <MapPin className="w-4 h-4 mr-1" />
+        {/* Location */}
+        <div className="flex items-center text-gray-600 text-sm mb-4">
+          <MapPin className="w-4 h-4 mr-2 text-gray-400 flex-shrink-0" />
           <span className="line-clamp-1">{ad.preferredLocation}</span>
         </div>
 
-        <div className="grid grid-cols-2 gap-2 text-sm text-gray-600">
+        {/* Property Details */}
+        <div className="space-y-2 mb-4">
           {ad.minBedrooms > 0 && (
-            <div>
-              <span className="font-medium">Min Bedrooms:</span> {ad.minBedrooms}+
+            <div className="text-sm text-gray-700">
+              <span className="font-semibold">Min Bedrooms:</span>{' '}
+              <span className="text-gray-900">{ad.minBedrooms}+</span>
             </div>
           )}
-          {ad.propertyType && (
-            <div>
-              <span className="font-medium">Type:</span> {ad.propertyType}
+          {ad.propertyType && ad.propertyType !== 'Any' && (
+            <div className="text-sm text-gray-700">
+              <span className="font-semibold">Type:</span>{' '}
+              <span className="text-gray-900">{ad.propertyType}</span>
             </div>
           )}
           {ad.useClass && (
-            <div className="col-span-2">
-              <span className="font-medium">Use Class:</span> {ad.useClass}
+            <div className="text-sm text-gray-700">
+              <span className="font-semibold">Use Class:</span>{' '}
+              <span className="text-gray-900">{ad.useClass}</span>
             </div>
           )}
         </div>
 
+        {/* Description */}
         {ad.description && (
-          <p className="text-sm text-gray-600 line-clamp-2 pt-2 border-t">
+          <p className="text-sm text-gray-600 line-clamp-3 mb-4 flex-grow">
             {ad.description}
           </p>
         )}
 
+        {/* Lease Length */}
         {ad.desiredLeaseLength && (
-          <div className="flex items-center text-gray-500 text-xs pt-2">
-            <Calendar className="w-4 h-4 mr-1" />
+          <div className="flex items-center text-gray-600 text-sm mb-4">
+            <Calendar className="w-4 h-4 mr-2 text-gray-400" />
             <span>{ad.desiredLeaseLength}</span>
           </div>
         )}
 
-        <div className="flex flex-wrap gap-2 pt-2">
+        {/* Feature Tags */}
+        <div className="flex flex-wrap gap-2 pt-4 border-t border-gray-200 mt-auto">
           {ad.needsWheelchairAccessible && (
-            <span className="px-2 py-1 bg-green-50 text-green-700 text-xs rounded-full">
+            <span className="px-3 py-1.5 bg-green-100 text-green-700 text-xs font-medium rounded-full">
               Wheelchair Access
             </span>
           )}
           {ad.needsParking && (
-            <span className="px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded-full">
+            <span className="px-3 py-1.5 bg-blue-100 text-blue-700 text-xs font-medium rounded-full">
               Parking Required
             </span>
           )}
           {ad.needsHMOLicence && (
-            <span className="px-2 py-1 bg-purple-50 text-purple-700 text-xs rounded-full">
+            <span className="px-3 py-1.5 bg-purple-100 text-purple-700 text-xs font-medium rounded-full">
               HMO Licence
             </span>
           )}

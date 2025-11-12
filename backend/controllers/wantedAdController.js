@@ -76,6 +76,39 @@ export const createWantedAd = async (req, res) => {
       userId: req.userId
     };
     
+    // Validate required fields
+    if (!wantedAdData.userId) {
+      return res.status(400).json({
+        success: false,
+        message: 'User ID is required',
+        error: 'Authentication required'
+      });
+    }
+    
+    if (!wantedAdData.businessName || !wantedAdData.businessEmail || !wantedAdData.companyName) {
+      return res.status(400).json({
+        success: false,
+        message: 'Business name, email, and company name are required',
+        error: 'Missing business information'
+      });
+    }
+    
+    if (!wantedAdData.businessType || !wantedAdData.preferredLocation) {
+      return res.status(400).json({
+        success: false,
+        message: 'Business type and preferred location are required',
+        error: 'Missing required wanted ad information'
+      });
+    }
+    
+    // Ensure numbers are properly formatted
+    if (wantedAdData.minBedrooms) wantedAdData.minBedrooms = parseInt(wantedAdData.minBedrooms) || 0;
+    if (wantedAdData.minEnSuites) wantedAdData.minEnSuites = parseInt(wantedAdData.minEnSuites) || 0;
+    if (wantedAdData.minStudioRooms) wantedAdData.minStudioRooms = parseInt(wantedAdData.minStudioRooms) || 0;
+    if (wantedAdData.minKitchens) wantedAdData.minKitchens = parseInt(wantedAdData.minKitchens) || 0;
+    if (wantedAdData.minReceptionRooms) wantedAdData.minReceptionRooms = parseInt(wantedAdData.minReceptionRooms) || 0;
+    if (wantedAdData.hmoLicenceFor) wantedAdData.hmoLicenceFor = parseInt(wantedAdData.hmoLicenceFor) || 0;
+    
     const wantedAd = await WantedAd.create(wantedAdData);
     
     res.status(201).json({
@@ -84,10 +117,31 @@ export const createWantedAd = async (req, res) => {
       data: wantedAd
     });
   } catch (error) {
+    console.error('Error creating wanted ad:', error);
+    console.error('Request body:', req.body);
+    console.error('User ID:', req.userId);
+    
+    // Handle Mongoose validation errors
+    if (error.name === 'ValidationError') {
+      const validationErrors = Object.values(error.errors).map(err => ({
+        field: err.path,
+        message: err.message,
+        value: err.value
+      }));
+      console.error('Validation errors:', validationErrors);
+      return res.status(400).json({
+        success: false,
+        message: 'Validation error',
+        error: error.message,
+        details: validationErrors
+      });
+    }
+    
     res.status(400).json({
       success: false,
       message: 'Error creating wanted ad',
-      error: error.message
+      error: error.message,
+      errorName: error.name
     });
   }
 };

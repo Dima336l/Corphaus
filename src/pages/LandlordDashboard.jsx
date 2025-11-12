@@ -47,17 +47,11 @@ export const LandlordDashboard = () => {
   }, [user]);
 
   const handleDelete = async (propertyId) => {
-    if (!window.confirm('Are you sure you want to delete this property listing?')) {
-      return;
-    }
-
     try {
       await propertiesAPI.delete(propertyId, user.id || user._id);
       setMyProperties(myProperties.filter((p) => p._id !== propertyId));
-      alert('Property deleted successfully!');
     } catch (error) {
       console.error('Error deleting property:', error);
-      alert('Failed to delete property. Please try again.');
     }
   };
 

@@ -54,19 +54,19 @@ export const WantedAdDetailPage = () => {
     }
 
     if (!ad?.userId) {
-      alert('Unable to contact business at this time.');
+      console.warn('Unable to contact business: userId is missing');
       return;
     }
 
     // Check if this is a real user (not marketplace/seed data)
     if (ad.userId === 'marketplace' || ad.userId.length < 20) {
-      alert('This is a marketplace listing. Messaging is only available for user-owned wanted ads.');
+      console.warn('This is a marketplace listing. Messaging is only available for user-owned wanted ads.');
       return;
     }
 
     // Don't let user message themselves
-    if (ad.userId === user._id) {
-      alert("You can't send a message to yourself!");
+    if (ad.userId === user._id || ad.userId === user.id) {
+      console.warn("Cannot send message to yourself");
       return;
     }
 
@@ -90,7 +90,6 @@ export const WantedAdDetailPage = () => {
       navigate(`/messages?thread=${threadId}`);
     } catch (err) {
       console.error('Failed to send message:', err);
-      alert('Failed to send message. Please try again.');
       throw err; // Re-throw so modal can handle it
     }
   };

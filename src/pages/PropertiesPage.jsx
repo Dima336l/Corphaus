@@ -33,14 +33,15 @@ export const PropertiesPage = () => {
         if (filters.hasParking) apiFilters.hasParking = 'true';
         if (filters.wheelchairAccessible) apiFilters.wheelchairAccessible = 'true';
         if (filters.furnished) apiFilters.furnished = 'true';
-        if (filters.search) apiFilters.postcode = filters.search;
+        if (filters.search) apiFilters.search = filters.search;
         
         const response = await propertiesAPI.getAll(apiFilters);
         setProperties(response.data || []);
         setError(null);
       } catch (err) {
         console.error('Error fetching properties:', err);
-        setError('Failed to load properties. Please try again.');
+        setError(err.message || 'Failed to load properties. Please try again.');
+        setProperties([]); // Clear properties on error
       } finally {
         setLoading(false);
       }

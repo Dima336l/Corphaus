@@ -60,19 +60,19 @@ export const PropertyDetailPage = () => {
     }
 
     if (!property?.userId) {
-      alert('Unable to contact landlord at this time.');
+      console.warn('Unable to contact landlord: userId is missing');
       return;
     }
 
     // Check if this is a real user (not marketplace/seed data)
     if (property.userId === 'marketplace' || property.userId.length < 20) {
-      alert('This is a marketplace listing. Messaging is only available for user-owned properties.');
+      console.warn('This is a marketplace listing. Messaging is only available for user-owned properties.');
       return;
     }
 
     // Don't let user message themselves
-    if (property.userId === user._id) {
-      alert("You can't send a message to yourself!");
+    if (property.userId === user._id || property.userId === user.id) {
+      console.warn("Cannot send message to yourself");
       return;
     }
 
@@ -96,7 +96,6 @@ export const PropertyDetailPage = () => {
       navigate(`/messages?thread=${threadId}`);
     } catch (err) {
       console.error('Failed to send message:', err);
-      alert('Failed to send message. Please try again.');
       throw err; // Re-throw so modal can handle it
     }
   };
