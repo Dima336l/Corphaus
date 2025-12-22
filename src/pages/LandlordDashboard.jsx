@@ -140,13 +140,33 @@ export const LandlordDashboard = () => {
 
         {/* Quick Actions */}
         <div className="mb-10">
-          <Link
-            to="/landlord/add-property"
-            className="bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-200 inline-flex items-center space-x-2 shadow-lg hover:shadow-xl"
-          >
-            <Plus className="w-5 h-5" />
-            <span>List New Property</span>
-          </Link>
+          {!isPaid && myProperties.length >= 1 ? (
+            <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">You've reached your free listing limit</h3>
+                  <p className="text-gray-600 mb-4">
+                    Free users can list 1 property. Upgrade to Pro for unlimited listings and additional features.
+                  </p>
+                  <Link
+                    to="/pricing"
+                    className="inline-flex items-center space-x-2 bg-primary-600 hover:bg-primary-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors duration-200"
+                  >
+                    <TrendingUp className="w-4 h-4" />
+                    <span>Upgrade to Pro</span>
+                  </Link>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <Link
+              to="/landlord/add-property"
+              className="bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-200 inline-flex items-center space-x-2 shadow-lg hover:shadow-xl"
+            >
+              <Plus className="w-5 h-5" />
+              <span>List New Property</span>
+            </Link>
+          )}
         </div>
 
         {/* Tabs */}

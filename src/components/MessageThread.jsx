@@ -12,19 +12,24 @@ const MessageThread = ({ thread, onBack, onMessageSent }) => {
   const [error, setError] = useState(null);
   const [showOptions, setShowOptions] = useState(false);
   const messagesEndRef = useRef(null);
+  const messagesContainerRef = useRef(null);
   const optionsRef = useRef(null);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  const scrollToBottom = (instant = false) => {
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTo({
+        top: messagesContainerRef.current.scrollHeight,
+        behavior: instant ? 'auto' : 'smooth'
+      });
+    }
   };
 
   useEffect(() => {
     loadMessages();
   }, [thread]);
 
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+  // Removed automatic scroll on messages change - scroll is now handled explicitly
+  // in loadMessages() and handleSendMessage() to prevent unwanted scroll jumps
 
   // Close options menu when clicking outside
   useEffect(() => {
@@ -48,10 +53,16 @@ const MessageThread = ({ thread, onBack, onMessageSent }) => {
 
     try {
       const response = await messagesAPI.getThread(thread.threadId, user._id);
-      setMessages(response.data || []);
+      const loadedMessages = response.data || [];
+      setMessages(loadedMessages);
 
       // Mark as read
       await messagesAPI.markAsRead(thread.threadId, user._id);
+
+      // Scroll to bottom after messages are loaded (use setTimeout to ensure DOM is updated)
+      setTimeout(() => {
+        scrollToBottom(true); // Use instant scroll for initial load to prevent jump
+      }, 100);
     } catch (err) {
       console.error('Failed to load messages:', err);
       setError('Failed to load messages. Please try again.');
@@ -84,8 +95,14 @@ const MessageThread = ({ thread, onBack, onMessageSent }) => {
       const response = await messagesAPI.send(messageData, user._id);
 
       // Add new message to list
-      setMessages([...messages, response.data]);
+      const updatedMessages = [...messages, response.data];
+      setMessages(updatedMessages);
       setNewMessage('');
+
+      // Scroll to bottom when new message is sent
+      setTimeout(() => {
+        scrollToBottom(true); // Use instant scroll to prevent jump
+      }, 50);
 
       // Notify parent to update conversation list
       if (onMessageSent) {
@@ -290,7 +307,7 @@ const MessageThread = ({ thread, onBack, onMessageSent }) => {
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
+      <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 bg-gray-50">
         {loading && (
           <div className="h-full flex items-center justify-center">
             <div className="text-center">

@@ -224,11 +224,8 @@ export const AddPropertyPage = () => {
           const userListings = myListingsResponse.data || [];
           
           if (userListings.length >= 1) {
-            setError('Free users can only post one listing. Please upgrade to Pro for unlimited listings.');
+            setError('You have reached your free listing limit of 1 property. Please upgrade to Pro for unlimited listings.');
             setLoading(false);
-            setTimeout(() => {
-              navigate('/pricing');
-            }, 2000);
             return;
           }
         } catch (err) {

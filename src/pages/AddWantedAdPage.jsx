@@ -82,11 +82,8 @@ export const AddWantedAdPage = () => {
           const userAds = myListingsResponse.data || [];
           
           if (userAds.length >= 1) {
-            setError('Free users can only post one wanted ad. Please upgrade to Pro for unlimited ads.');
+            setError('You have reached your free listing limit of 1 wanted ad. Please upgrade to Pro for unlimited wanted ads.');
             setLoading(false);
-            setTimeout(() => {
-              navigate('/pricing');
-            }, 2000);
             return;
           }
         } catch (err) {

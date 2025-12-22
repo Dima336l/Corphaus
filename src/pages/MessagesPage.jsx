@@ -73,6 +73,8 @@ const MessagesPage = () => {
   const handleSelectConversation = (conversation) => {
     setSelectedThread(conversation);
     setSearchParams({ thread: conversation.threadId });
+    // Prevent default scroll behavior by maintaining scroll position
+    window.scrollTo({ top: 0, behavior: 'auto' });
   };
 
   const handleBackToList = () => {
