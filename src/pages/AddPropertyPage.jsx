@@ -14,7 +14,7 @@ import {
   hmoLicenceOptions,
   leaseLengths
 } from '../data/formOptions';
-import { Home, MapPin, DollarSign, Upload } from 'lucide-react';
+import { Home, MapPin, DollarSign, Upload, X } from 'lucide-react';
 
 export const AddPropertyPage = () => {
   const { user, isPaid } = useAuth();
@@ -54,6 +54,132 @@ export const AddPropertyPage = () => {
       ...formData,
       [name]: type === 'checkbox' ? checked : value,
     });
+  };
+
+  // Helper function to compress/resize image
+  const compressImage = (file, maxWidth = 1920, maxHeight = 1920, quality = 0.85) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+
+          // Calculate new dimensions
+          if (width > maxWidth || height > maxHeight) {
+            const ratio = Math.min(maxWidth / width, maxHeight / height);
+            width = width * ratio;
+            height = height * ratio;
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+
+          // Convert to base64 with compression
+          canvas.toBlob(
+            (blob) => {
+              if (!blob) {
+                reject(new Error('Failed to compress image'));
+                return;
+              }
+              const reader2 = new FileReader();
+              reader2.onload = () => resolve(reader2.result);
+              reader2.onerror = () => reject(new Error('Failed to read compressed image'));
+              reader2.readAsDataURL(blob);
+            },
+            file.type || 'image/jpeg',
+            quality
+          );
+        };
+        img.onerror = () => reject(new Error('Failed to load image'));
+        img.src = e.target.result;
+      };
+      reader.onerror = () => reject(new Error('Failed to read file'));
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handlePhotoChange = async (e) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    // Limit to 10 photos
+    const photosToProcess = files.slice(0, 10 - formData.photos.length);
+    
+    if (photosToProcess.length === 0) {
+      setError('Maximum 10 photos allowed');
+      return;
+    }
+
+    // Convert files to compressed base64 data URLs
+    const photoPromises = photosToProcess.map((file) => {
+      return new Promise(async (resolve, reject) => {
+        try {
+          // Validate file type
+          if (!file.type.startsWith('image/')) {
+            reject(new Error(`${file.name} is not an image file`));
+            return;
+          }
+
+          // Validate file size (max 5MB per image before compression)
+          if (file.size > 5 * 1024 * 1024) {
+            reject(new Error(`${file.name} is too large (max 5MB)`));
+            return;
+          }
+
+          // Compress image before converting to base64
+          const compressedDataUrl = await compressImage(file, 1920, 1920, 0.85);
+          resolve(compressedDataUrl);
+        } catch (error) {
+          reject(error);
+        }
+      });
+    });
+
+    try {
+      const photoDataUrls = await Promise.all(photoPromises);
+      setFormData({
+        ...formData,
+        photos: [...formData.photos, ...photoDataUrls].slice(0, 10), // Keep max 10 photos
+      });
+    } catch (error) {
+      setError(error.message || 'Error processing photos');
+    }
+  };
+
+  const handleRemovePhoto = (index) => {
+    setFormData({
+      ...formData,
+      photos: formData.photos.filter((_, i) => i !== index),
+    });
+  };
+
+  const handleFloorPlanChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file size (max 10MB for floor plan)
+    if (file.size > 10 * 1024 * 1024) {
+      setError('Floor plan file is too large (max 10MB)');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setFormData({
+        ...formData,
+        floorPlan: e.target.result,
+      });
+    };
+    reader.onerror = () => {
+      setError('Error reading floor plan file');
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleBusinessModelToggle = (model) => {
@@ -156,12 +282,51 @@ export const AddPropertyPage = () => {
       if (response.success) {
         navigate('/landlord/dashboard');
       } else {
-        setError(response.message || 'Failed to create property listing');
+        // Format error message nicely
+        let errorMessage = response.message || 'Failed to create property listing';
+        
+        // If there are validation details, format them nicely
+        if (response.details && Array.isArray(response.details)) {
+          const formattedErrors = response.details.map(detail => 
+            `• ${detail.fieldName || detail.field}: ${detail.message}`
+          ).join('\n');
+          errorMessage = formattedErrors;
+        }
+        
+        setError(errorMessage);
       }
     } catch (err) {
       console.error('Error creating property:', err);
-      // Display more detailed error message
-      const errorMessage = err.message || 'Failed to create property listing. Please try again.';
+      
+      // Try to extract user-friendly error from response
+      let errorMessage = 'Failed to create property listing. Please try again.';
+      
+      if (err.message) {
+        // Check if error message contains validation details
+        if (err.message.includes('Validation error') || err.message.includes('Details:')) {
+          // Try to parse the details from the error message
+          try {
+            const errorText = err.message;
+            // Extract the details part if present
+            const detailsMatch = errorText.match(/Details:\s*(\[.*\])/);
+            if (detailsMatch) {
+              const details = JSON.parse(detailsMatch[1]);
+              errorMessage = details.map(d => 
+                `• ${d.fieldName || d.field}: ${d.message}`
+              ).join('\n');
+            } else {
+              // Use the message as-is if it's already formatted
+              errorMessage = errorText.replace(/Validation error\s*Details:\s*/, '');
+            }
+          } catch (parseError) {
+            // If parsing fails, use the original message
+            errorMessage = err.message.replace(/Details:\s*\[.*\]/, '').trim();
+          }
+        } else {
+          errorMessage = err.message;
+        }
+      }
+      
       setError(errorMessage);
       console.error('Full error details:', err);
     } finally {
@@ -554,15 +719,42 @@ export const AddPropertyPage = () => {
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Property Photos
+                    Property Photos {formData.photos.length > 0 && `(${formData.photos.length}/10)`}
                   </label>
                   <input
                     type="file"
                     multiple
                     accept="image/*"
+                    onChange={handlePhotoChange}
+                    disabled={formData.photos.length >= 10}
                     className="input-field"
                   />
-                  <p className="text-sm text-gray-500 mt-1">Upload up to 10 photos (JPG, PNG)</p>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Upload up to 10 photos (JPG, PNG, max 5MB each)
+                  </p>
+
+                  {/* Photo Preview */}
+                  {formData.photos.length > 0 && (
+                    <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
+                      {formData.photos.map((photo, index) => (
+                        <div key={index} className="relative group">
+                          <img
+                            src={photo}
+                            alt={`Property photo ${index + 1}`}
+                            className="w-full h-32 object-cover rounded-lg border border-gray-200"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleRemovePhoto(index)}
+                            className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                            title="Remove photo"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 <div>
@@ -572,9 +764,24 @@ export const AddPropertyPage = () => {
                   <input
                     type="file"
                     accept="image/*,.pdf"
+                    onChange={handleFloorPlanChange}
                     className="input-field"
                   />
-                  <p className="text-sm text-gray-500 mt-1">Upload floor plan (JPG, PNG, or PDF)</p>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Upload floor plan (JPG, PNG, or PDF, max 10MB)
+                  </p>
+                  {formData.floorPlan && (
+                    <div className="mt-4">
+                      <p className="text-sm text-green-600 mb-2">✓ Floor plan uploaded</p>
+                      {formData.floorPlan.startsWith('data:image/') && (
+                        <img
+                          src={formData.floorPlan}
+                          alt="Floor plan"
+                          className="max-w-md h-auto rounded-lg border border-gray-200"
+                        />
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             </section>

@@ -205,28 +205,29 @@ export const BusinessDashboard = () => {
                 </Link>
               </div>
             ) : (
-              <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {myAds.map((ad) => (
-                  <div key={ad._id} className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-all duration-300">
-                    <div className="flex items-start gap-6">
-                      <div className="flex-1">
-                        <WantedAdCard ad={ad} />
-                      </div>
-                      <div className="flex flex-col gap-3">
-                        <Link
-                          to={`/wanted-ads/${ad._id}`}
-                          className="bg-gray-100 hover:bg-gray-200 text-gray-700 hover:text-gray-900 font-medium px-4 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-2 text-sm"
-                        >
-                          <Eye className="w-4 h-4" />
-                          <span>View</span>
-                        </Link>
-                        <button
-                          onClick={() => handleDelete(ad._id)}
-                          className="text-sm text-red-600 hover:text-red-700 font-medium px-4 py-2 rounded-lg border border-red-200 hover:bg-red-50 transition-colors duration-200"
-                        >
-                          Delete
-                        </button>
-                      </div>
+                  <div key={ad._id} className="relative group">
+                    <WantedAdCard ad={ad} />
+                    <div className="absolute bottom-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Link
+                        to={`/wanted-ads/${ad._id}`}
+                        className="bg-white hover:bg-gray-100 text-gray-700 hover:text-gray-900 font-medium px-3 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-2 text-sm shadow-lg border border-gray-200"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <Eye className="w-4 h-4" />
+                        <span>View</span>
+                      </Link>
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleDelete(ad._id);
+                        }}
+                        className="text-sm text-red-600 hover:text-red-700 font-medium px-3 py-2 rounded-lg border border-red-200 hover:bg-red-50 transition-colors duration-200 bg-white shadow-lg"
+                      >
+                        Delete
+                      </button>
                     </div>
                   </div>
                 ))}

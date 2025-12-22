@@ -19,8 +19,21 @@ export const ContactPage = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // In production, this would send to backend
-    console.log('Contact form submitted:', formData);
+    
+    // Create mailto link with form data
+    const recipientEmail = 'info@corphaus.com';
+    const subject = encodeURIComponent(formData.subject || 'Contact Form Submission');
+    const body = encodeURIComponent(
+      `Name: ${formData.name}\n` +
+      `Email: ${formData.email}\n\n` +
+      `Message:\n${formData.message}`
+    );
+    const mailtoLink = `mailto:${recipientEmail}?subject=${subject}&body=${body}`;
+    
+    // Open email client
+    window.location.href = mailtoLink;
+    
+    // Show success message
     setSubmitted(true);
     setTimeout(() => {
       setSubmitted(false);

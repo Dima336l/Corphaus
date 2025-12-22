@@ -35,9 +35,17 @@ const apiRequest = async (endpoint, options = {}) => {
 
     if (!response.ok) {
       // Include more details in the error message
-      const errorMessage = data.message || data.error || `API request failed: ${response.status}`;
-      const errorDetails = data.details ? ` Details: ${JSON.stringify(data.details)}` : '';
-      throw new Error(`${errorMessage}${errorDetails}`);
+      let errorMessage = data.message || data.error || `API request failed: ${response.status}`;
+      
+      // Format validation errors nicely
+      if (data.details && Array.isArray(data.details)) {
+        const formattedDetails = data.details.map(detail => 
+          `• ${detail.fieldName || detail.field}: ${detail.message}`
+        ).join('\n');
+        errorMessage = formattedDetails || errorMessage;
+      }
+      
+      throw new Error(errorMessage);
     }
 
     return data;
@@ -182,6 +190,26 @@ export const authAPI = {
   },
 };
 
+// Payments API
+export const paymentsAPI = {
+  createOrder: (userId) => {
+    return apiRequest('/payments/create-order', {
+      method: 'POST',
+      headers: {
+        'x-user-id': userId,
+      },
+    });
+  },
+
+  checkStatus: (orderId, userId) => {
+    return apiRequest(`/payments/status/${orderId}`, {
+      headers: {
+        'x-user-id': userId,
+      },
+    });
+  },
+};
+
 // Messages API
 export const messagesAPI = {
   send: (messageData, userId) => {
@@ -242,5 +270,6 @@ export default {
   properties: propertiesAPI,
   wantedAds: wantedAdsAPI,
   messages: messagesAPI,
+  payments: paymentsAPI,
 };
 

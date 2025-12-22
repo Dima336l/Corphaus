@@ -43,11 +43,14 @@ const userSchema = new mongoose.Schema({
     type: Date
   },
   
-  // Stripe Integration (for future)
-  stripeCustomerId: {
+  // Revolut Payment Integration
+  revolutCustomerId: {
     type: String
   },
-  stripeSubscriptionId: {
+  revolutOrderId: {
+    type: String
+  },
+  revolutPaymentId: {
     type: String
   },
   

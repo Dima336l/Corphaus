@@ -150,9 +150,10 @@ export const getCurrentUser = async (req, res) => {
   }
 };
 
-// @desc    Upgrade to paid subscription
+// @desc    Upgrade to paid subscription (legacy - now redirects to payment)
 // @route   POST /api/auth/upgrade
 // @access  Private
+// @note    This endpoint is deprecated. Use /api/payments/create-order instead.
 export const upgradeToPaid = async (req, res) => {
   try {
     const user = await User.findById(req.userId);
@@ -164,21 +165,40 @@ export const upgradeToPaid = async (req, res) => {
       });
     }
 
-    // Update subscription
-    user.isPaid = true;
-    user.subscriptionPlan = 'pro';
-    user.subscriptionStartDate = new Date();
-    user.subscriptionEndDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
-    
-    await user.save();
+    // Check if already paid
+    if (user.isPaid && user.subscriptionEndDate > new Date()) {
+      return res.status(400).json({
+        success: false,
+        message: 'User already has an active subscription'
+      });
+    }
 
-    const userResponse = user.toObject();
-    delete userResponse.password;
+    // Legacy: For backward compatibility, allow direct upgrade if REVOLUT_API_KEY is not set
+    // In production, this should always go through payment flow
+    if (!process.env.REVOLUT_API_KEY) {
+      // Update subscription (development/testing only)
+      user.isPaid = true;
+      user.subscriptionPlan = 'pro';
+      user.subscriptionStartDate = new Date();
+      user.subscriptionEndDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
+      
+      await user.save();
 
-    res.json({
-      success: true,
-      message: 'Successfully upgraded to Pro!',
-      user: userResponse
+      const userResponse = user.toObject();
+      delete userResponse.password;
+
+      return res.json({
+        success: true,
+        message: 'Successfully upgraded to Pro! (Development mode - no payment processed)',
+        user: userResponse
+      });
+    }
+
+    // In production, redirect to payment flow
+    return res.status(400).json({
+      success: false,
+      message: 'Please use /api/payments/create-order to initiate payment',
+      redirectTo: '/api/payments/create-order'
     });
   } catch (error) {
     res.status(500).json({

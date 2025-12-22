@@ -6,7 +6,10 @@
   "type": "module",
   "scripts": {
     "start": "node server.js",
-    "dev": "nodemon server.js"
+    "dev": "nodemon server.js",
+    "create-test-users": "node createTestUsers.js",
+    "seed-data": "node seedWithUserData.js",
+    "setup-test-data": "node createTestUsers.js && node seedWithUserData.js"
   },
   "keywords": [
     "property",

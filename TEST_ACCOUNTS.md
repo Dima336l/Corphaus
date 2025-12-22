@@ -203,7 +203,32 @@ Header: [Logo] 🏠 Browse Properties | ➕ Post Wanted Ad | 📊 Dashboard | Pr
 
 ---
 
+## ⚙️ Setup Instructions
+
+Before using these test accounts, you need to create them in the database:
+
+### Quick Setup (One Command):
+```bash
+cd backend
+npm run setup-test-data
+```
+
+This will:
+1. Create all 4 test user accounts
+2. Seed properties and wanted ads for each account
+
+### Manual Setup:
+```bash
+cd backend
+
+# Step 1: Create test users
+npm run create-test-users
+
+# Step 2: Seed properties and wanted ads
+npm run seed-data
+```
+
 **Ready to test!** 🎉
 
-Just open http://localhost:5173 and try logging in with any of these accounts!
+After running the setup, open http://localhost:5173 and try logging in with any of these accounts!
 

@@ -139,9 +139,66 @@ export const PropertyDetailPage = () => {
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
             {/* Images */}
-            <div className="bg-gradient-to-br from-primary-100 to-primary-200 rounded-2xl aspect-video flex items-center justify-center">
-              <Home className="w-24 h-24 text-primary-600 opacity-50" />
-            </div>
+            {property.photos && property.photos.length > 0 ? (
+              <div className="space-y-4">
+                {/* Main Image */}
+                <div className="rounded-2xl overflow-hidden bg-gray-100">
+                  <img
+                    src={property.photos[0]}
+                    alt={property.propertyType}
+                    className="w-full h-auto max-h-96 object-cover"
+                    onError={(e) => {
+                      // Hide broken image and show placeholder
+                      e.target.style.display = 'none';
+                      const parent = e.target.parentElement;
+                      parent.className = 'bg-gradient-to-br from-primary-100 to-primary-200 rounded-2xl aspect-video flex items-center justify-center';
+                      parent.innerHTML = '';
+                      const icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                      icon.setAttribute('class', 'w-24 h-24 text-primary-600 opacity-50');
+                      icon.setAttribute('fill', 'none');
+                      icon.setAttribute('stroke', 'currentColor');
+                      icon.setAttribute('viewBox', '0 0 24 24');
+                      const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                      path.setAttribute('stroke-linecap', 'round');
+                      path.setAttribute('stroke-linejoin', 'round');
+                      path.setAttribute('stroke-width', '2');
+                      path.setAttribute('d', 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6');
+                      icon.appendChild(path);
+                      parent.appendChild(icon);
+                    }}
+                  />
+                </div>
+                
+                {/* Thumbnail Gallery */}
+                {property.photos.length > 1 && (
+                  <div className="grid grid-cols-4 gap-2">
+                    {property.photos.slice(1, 5).map((photo, index) => (
+                      <div key={index} className="rounded-lg overflow-hidden bg-gray-100 aspect-square">
+                        <img
+                          src={photo}
+                          alt={`${property.propertyType} photo ${index + 2}`}
+                          className="w-full h-full object-cover cursor-pointer hover:opacity-80 transition-opacity"
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                            e.target.parentElement.className = 'rounded-lg bg-gray-200 flex items-center justify-center aspect-square';
+                            e.target.parentElement.innerHTML = '<span class="text-gray-400 text-xs">Failed to load</span>';
+                          }}
+                        />
+                      </div>
+                    ))}
+                    {property.photos.length > 5 && (
+                      <div className="rounded-lg bg-gray-200 flex items-center justify-center aspect-square text-gray-600 font-semibold">
+                        +{property.photos.length - 5}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="bg-gradient-to-br from-primary-100 to-primary-200 rounded-2xl aspect-video flex items-center justify-center">
+                <Home className="w-24 h-24 text-primary-600 opacity-50" />
+              </div>
+            )}
 
             {/* Property Details */}
             <div className="bg-white rounded-2xl shadow-lg p-8">

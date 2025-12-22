@@ -6,6 +6,7 @@ import propertyRoutes from './routes/propertyRoutes.js';
 import wantedAdRoutes from './routes/wantedAdRoutes.js';
 import authRoutes from './routes/authRoutes.js';
 import messageRoutes from './routes/messageRoutes.js';
+import paymentRoutes from './routes/paymentRoutes.js';
 
 dotenv.config();
 
@@ -19,7 +20,10 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'x-user-id', 'x-user-ispaid'],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
 }));
-app.use(express.json());
+// Increase body size limit to handle base64-encoded images
+// 50MB limit should be sufficient for multiple 5MB images
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // MongoDB Atlas Connection
 const connectDB = async () => {
@@ -55,6 +59,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/properties', propertyRoutes);
 app.use('/api/wanted-ads', wantedAdRoutes);
 app.use('/api/messages', messageRoutes);
+app.use('/api/payments', paymentRoutes);
 
 // Test route
 app.get('/api', (req, res) => {
@@ -92,6 +97,11 @@ app.get('/api', (req, res) => {
         markRead: 'PUT /api/messages/read/:threadId (auth required)',
         unreadCount: 'GET /api/messages/unread-count (auth required)',
         delete: 'DELETE /api/messages/:messageId (auth required)'
+      },
+      payments: {
+        createOrder: 'POST /api/payments/create-order (auth required)',
+        webhook: 'POST /api/payments/webhook (Revolut webhook)',
+        checkStatus: 'GET /api/payments/status/:orderId (auth required)'
       }
     }
   });

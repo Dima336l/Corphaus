@@ -133,6 +133,15 @@ export const createProperty = async (req, res) => {
     if (propertyData.receptionRooms) propertyData.receptionRooms = parseInt(propertyData.receptionRooms) || 0;
     if (propertyData.hmoLicenceFor) propertyData.hmoLicenceFor = parseInt(propertyData.hmoLicenceFor) || 0;
     
+    // Remove empty strings from optional enum fields (epcRating, leaseLength)
+    // Empty strings cause validation errors for enum fields
+    if (propertyData.epcRating === '' || propertyData.epcRating === null) {
+      delete propertyData.epcRating;
+    }
+    if (propertyData.leaseLength === '' || propertyData.leaseLength === null) {
+      delete propertyData.leaseLength;
+    }
+    
     const property = await Property.create(propertyData);
     
     res.status(201).json({
@@ -149,15 +158,44 @@ export const createProperty = async (req, res) => {
     
     // Handle Mongoose validation errors
     if (error.name === 'ValidationError') {
-      const validationErrors = Object.values(error.errors).map(err => ({
-        field: err.path,
-        message: err.message,
-        value: err.value
-      }));
+      const validationErrors = Object.values(error.errors).map(err => {
+        // Create user-friendly field names
+        const fieldNames = {
+          'epcRating': 'EPC Rating',
+          'propertyType': 'Property Type',
+          'streetAddress': 'Street Address',
+          'postcode': 'Postcode',
+          'useClass': 'Use Class',
+          'landlordName': 'Landlord Name',
+          'landlordEmail': 'Landlord Email',
+          'businessModels': 'Business Models',
+          'leaseLength': 'Lease Length'
+        };
+        
+        // Create user-friendly error messages
+        let friendlyMessage = err.message;
+        if (err.kind === 'enum') {
+          friendlyMessage = `Please select a valid ${fieldNames[err.path] || err.path} option`;
+        } else if (err.kind === 'required') {
+          friendlyMessage = `${fieldNames[err.path] || err.path} is required`;
+        }
+        
+        return {
+          field: err.path,
+          fieldName: fieldNames[err.path] || err.path,
+          message: friendlyMessage,
+          value: err.value
+        };
+      });
+      
       console.error('Validation errors:', validationErrors);
+      
+      // Create a user-friendly error message
+      const errorMessages = validationErrors.map(err => `• ${err.fieldName}: ${err.message}`).join('\n');
+      
       return res.status(400).json({
         success: false,
-        message: 'Validation error',
+        message: 'Please fix the following errors:\n' + errorMessages,
         error: error.message,
         details: validationErrors
       });
