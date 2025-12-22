@@ -4,6 +4,7 @@ import { PaidFeatureGate } from '../components/PaidFeatureGate';
 import { wantedAdsAPI, messagesAPI } from '../utils/api';
 import { useAuth } from '../contexts/AuthContext';
 import ComposeMessageModal from '../components/ComposeMessageModal';
+import ConfirmDeleteModal from '../components/ConfirmDeleteModal';
 import { 
   MapPin, 
   Briefcase, 
@@ -12,7 +13,8 @@ import {
   Phone,
   Building2,
   DollarSign,
-  Calendar
+  Calendar,
+  Trash2
 } from 'lucide-react';
 
 export const WantedAdDetailPage = () => {
@@ -23,6 +25,8 @@ export const WantedAdDetailPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showMessageModal, setShowMessageModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     const fetchAd = async () => {
@@ -94,6 +98,26 @@ export const WantedAdDetailPage = () => {
     }
   };
 
+  const handleDeleteClick = () => {
+    setShowDeleteModal(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    try {
+      setIsDeleting(true);
+      setError(null);
+      await wantedAdsAPI.delete(id, user._id || user.id);
+      navigate('/business/dashboard');
+    } catch (err) {
+      console.error('Failed to delete wanted ad:', err);
+      setError(err.message || 'Failed to delete wanted ad. Please try again.');
+      setIsDeleting(false);
+      setShowDeleteModal(false);
+    }
+  };
+
+  const isOwner = user && ad && (ad.userId === user._id || ad.userId === user.id);
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -122,12 +146,29 @@ export const WantedAdDetailPage = () => {
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="container mx-auto px-4">
-        <button
-          onClick={() => navigate(-1)}
-          className="text-primary-600 hover:text-primary-700 mb-6 flex items-center"
-        >
-          ← Back to wanted ads
-        </button>
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
+            {error}
+          </div>
+        )}
+        <div className="flex items-center justify-between mb-6">
+          <button
+            onClick={() => navigate(-1)}
+            className="text-primary-600 hover:text-primary-700 flex items-center"
+          >
+            ← Back to wanted ads
+          </button>
+          {isOwner && (
+            <button
+              onClick={handleDeleteClick}
+              disabled={isDeleting}
+              className="flex items-center space-x-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Trash2 className="w-4 h-4" />
+              <span>Delete Wanted Ad</span>
+            </button>
+          )}
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Content */}
@@ -363,6 +404,17 @@ export const WantedAdDetailPage = () => {
         onSend={handleSendMessage}
         recipientName={ad?.companyName || 'Business'}
         defaultMessage={`Hi, I'm interested in your wanted ad: ${ad?.companyName} looking for ${ad?.businessType} in ${ad?.preferredLocation}`}
+      />
+
+      {/* Confirm Delete Modal */}
+      <ConfirmDeleteModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={handleDeleteConfirm}
+        title="Delete Wanted Ad"
+        message={`Are you sure you want to delete this wanted ad?`}
+        itemName={`${ad?.companyName} - ${ad?.businessType}`}
+        isDeleting={isDeleting}
       />
     </div>
   );

@@ -101,6 +101,11 @@ export const createWantedAd = async (req, res) => {
       });
     }
     
+    // Remove empty strings from optional enum fields to prevent validation errors
+    if (wantedAdData.minEpcRating === '' || wantedAdData.minEpcRating === null) delete wantedAdData.minEpcRating;
+    if (wantedAdData.propertyType === '' || wantedAdData.propertyType === null) delete wantedAdData.propertyType;
+    if (wantedAdData.desiredLeaseLength === '' || wantedAdData.desiredLeaseLength === null) delete wantedAdData.desiredLeaseLength;
+    
     // Ensure numbers are properly formatted
     if (wantedAdData.minBedrooms) wantedAdData.minBedrooms = parseInt(wantedAdData.minBedrooms) || 0;
     if (wantedAdData.minEnSuites) wantedAdData.minEnSuites = parseInt(wantedAdData.minEnSuites) || 0;
@@ -123,11 +128,25 @@ export const createWantedAd = async (req, res) => {
     
     // Handle Mongoose validation errors
     if (error.name === 'ValidationError') {
-      const validationErrors = Object.values(error.errors).map(err => ({
-        field: err.path,
-        message: err.message,
-        value: err.value
-      }));
+      const fieldMap = {
+        'minEpcRating': 'Minimum EPC Rating',
+        'propertyType': 'Property Type',
+        'desiredLeaseLength': 'Desired Lease Length',
+        'businessType': 'Business Type',
+        'preferredLocation': 'Preferred Location',
+        'companyName': 'Company Name',
+        'businessName': 'Business Name',
+        'businessEmail': 'Business Email',
+      };
+      
+      const validationErrors = Object.values(error.errors).map(err => {
+        const fieldName = fieldMap[err.path] || err.path.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+        return { 
+          field: fieldName, 
+          message: err.message, 
+          value: err.value 
+        };
+      });
       console.error('Validation errors:', validationErrors);
       return res.status(400).json({
         success: false,
