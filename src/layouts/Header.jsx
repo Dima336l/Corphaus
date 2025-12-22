@@ -28,7 +28,16 @@ export const Header = () => {
     // Poll every 30 seconds for new messages
     const interval = setInterval(fetchUnreadCount, 30000);
 
-    return () => clearInterval(interval);
+    // Listen for custom event when messages are read
+    const handleMessagesRead = () => {
+      fetchUnreadCount();
+    };
+    window.addEventListener('messagesRead', handleMessagesRead);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('messagesRead', handleMessagesRead);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?._id]); // Only reload when user ID changes
 

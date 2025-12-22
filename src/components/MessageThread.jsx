@@ -14,6 +14,7 @@ const MessageThread = ({ thread, onBack, onMessageSent }) => {
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
   const optionsRef = useRef(null);
+  const hasMarkedAsReadRef = useRef(false);
 
   const scrollToBottom = (instant = false) => {
     if (messagesContainerRef.current) {
@@ -25,8 +26,11 @@ const MessageThread = ({ thread, onBack, onMessageSent }) => {
   };
 
   useEffect(() => {
-    loadMessages();
-  }, [thread]);
+    if (thread?.threadId) {
+      hasMarkedAsReadRef.current = false; // Reset when thread changes
+      loadMessages();
+    }
+  }, [thread?.threadId]); // Only depend on threadId, not the whole thread object
 
   // Removed automatic scroll on messages change - scroll is now handled explicitly
   // in loadMessages() and handleSendMessage() to prevent unwanted scroll jumps
@@ -56,8 +60,19 @@ const MessageThread = ({ thread, onBack, onMessageSent }) => {
       const loadedMessages = response.data || [];
       setMessages(loadedMessages);
 
-      // Mark as read
-      await messagesAPI.markAsRead(thread.threadId, user._id);
+      // Mark as read and refresh conversations list (only once per thread load)
+      if (!hasMarkedAsReadRef.current) {
+        await messagesAPI.markAsRead(thread.threadId, user._id);
+        hasMarkedAsReadRef.current = true;
+        
+        // Notify parent to refresh conversations list to update unread count
+        // Use setTimeout to debounce and prevent immediate re-renders
+        setTimeout(() => {
+          if (onMessageSent) {
+            onMessageSent();
+          }
+        }, 500);
+      }
 
       // Scroll to bottom after messages are loaded (use setTimeout to ensure DOM is updated)
       setTimeout(() => {

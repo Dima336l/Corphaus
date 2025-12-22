@@ -44,10 +44,17 @@ const MessagesPage = () => {
     if (threadParam && conversations.length > 0) {
       const thread = conversations.find(c => c.threadId === threadParam);
       if (thread) {
-        setSelectedThread(thread);
+        // Only update if thread ID changed or if it's the first time selecting this thread
+        if (!selectedThread || selectedThread.threadId !== thread.threadId) {
+          setSelectedThread(thread);
+        }
       }
+    } else if (!threadParam && selectedThread) {
+      // Clear selected thread if threadParam is removed
+      setSelectedThread(null);
     }
-  }, [threadParam, conversations]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [threadParam, conversations.length]); // Only depend on length to avoid loops
 
   const loadConversations = async () => {
     if (!user) return;
@@ -57,7 +64,19 @@ const MessagesPage = () => {
 
     try {
       const response = await messagesAPI.getConversations(user._id);
-      setConversations(response.data || []);
+      const updatedConversations = response.data || [];
+      setConversations(updatedConversations);
+      
+      // Update selected thread with latest data if it exists
+      if (selectedThread && threadParam) {
+        const updatedThread = updatedConversations.find(c => c.threadId === threadParam);
+        if (updatedThread && updatedThread.threadId === selectedThread.threadId) {
+          setSelectedThread(updatedThread);
+        }
+      }
+      
+      // Trigger a custom event to notify Header to refresh unread count
+      window.dispatchEvent(new CustomEvent('messagesRead'));
     } catch (err) {
       console.error('Failed to load conversations:', err);
       setError('Failed to load conversations. Please try again.');
