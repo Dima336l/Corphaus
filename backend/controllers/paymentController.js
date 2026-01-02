@@ -1,4 +1,8 @@
 import User from '../models/User.js';
+import dotenv from 'dotenv';
+
+// Ensure dotenv is loaded (in case it wasn't loaded in server.js yet)
+dotenv.config();
 
 // Revolut API configuration
 const REVOLUT_API_URL = process.env.REVOLUT_API_URL || 'https://merchant.revolut.com/api/1.0';
@@ -19,6 +23,14 @@ const revolutRequest = async (endpoint, options = {}) => {
     ...options.headers
   };
 
+  // Log request details in development
+  if (process.env.NODE_ENV === 'development') {
+    console.log(`[Revolut API] ${options.method || 'GET'} ${url}`);
+    if (options.body) {
+      console.log(`[Revolut API] Request body:`, options.body.substring(0, 500));
+    }
+  }
+
   const response = await fetch(url, {
     ...options,
     headers
@@ -26,6 +38,7 @@ const revolutRequest = async (endpoint, options = {}) => {
 
   if (!response.ok) {
     const errorText = await response.text();
+    console.error(`[Revolut API] Error response (${response.status}):`, errorText);
     throw new Error(`Revolut API error: ${response.status} - ${errorText}`);
   }
 
@@ -63,17 +76,22 @@ export const createPaymentOrder = async (req, res) => {
     const currency = 'GBP';
 
     // Create order in Revolut
+    // Note: Revolut API expects amount and currency at top level
     const orderData = {
       amount: amount,
       currency: currency,
       description: 'Corphaus Pro Subscription - Monthly',
-      customer_id: user.revolutCustomerId || undefined,
       metadata: {
         user_id: user._id.toString(),
         subscription_type: 'pro',
         plan: 'monthly'
       }
     };
+    
+    // Only include customer_id if it exists (don't send undefined)
+    if (user.revolutCustomerId) {
+      orderData.customer_id = user.revolutCustomerId;
+    }
 
     // Create or get customer ID
     if (!user.revolutCustomerId) {
@@ -81,9 +99,13 @@ export const createPaymentOrder = async (req, res) => {
       try {
         const customerData = {
           full_name: user.name,
-          email: user.email,
-          phone: user.phone || undefined
+          email: user.email
         };
+        // Only include phone if it exists (don't send undefined)
+        if (user.phone) {
+          customerData.phone = user.phone;
+        }
+        console.log('[Payment] Creating customer with data:', JSON.stringify(customerData, null, 2));
         const customer = await revolutRequest('/customers', {
           method: 'POST',
           body: JSON.stringify(customerData)
@@ -92,17 +114,20 @@ export const createPaymentOrder = async (req, res) => {
           user.revolutCustomerId = customer.id;
           await user.save();
           orderData.customer_id = customer.id;
+          console.log('[Payment] Customer created successfully:', customer.id);
         }
       } catch (customerError) {
-        console.warn('Failed to create Revolut customer, proceeding without:', customerError.message);
+        console.warn('[Payment] Failed to create Revolut customer, proceeding without:', customerError.message);
       }
     }
 
     // Create order
+    console.log('[Payment] Creating order with data:', JSON.stringify(orderData, null, 2));
     const order = await revolutRequest('/orders', {
       method: 'POST',
       body: JSON.stringify(orderData)
     });
+    console.log('[Payment] Order created successfully:', order.id);
 
     if (!order || !order.id) {
       throw new Error('Failed to create payment order');
@@ -113,13 +138,16 @@ export const createPaymentOrder = async (req, res) => {
     await user.save();
 
     // Return payment information to frontend
+    // Note: Revolut API returns order_amount.value and order_amount.currency, not amount/currency directly
+    const orderAmount = order.order_amount || { value: amount, currency: currency };
+    
     res.json({
       success: true,
       order: {
         id: order.id,
         public_id: order.public_id,
-        amount: order.amount,
-        currency: order.currency,
+        amount: orderAmount.value || amount,
+        currency: orderAmount.currency || currency,
         state: order.state,
         checkout_url: order.checkout_url, // URL to redirect user for payment
         // For card payments, you might also need card details or payment form
@@ -127,10 +155,12 @@ export const createPaymentOrder = async (req, res) => {
     });
   } catch (error) {
     console.error('Error creating payment order:', error);
+    console.error('Error stack:', error.stack);
     res.status(500).json({
       success: false,
       message: 'Error creating payment order',
-      error: error.message
+      error: error.message,
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
 };
@@ -300,13 +330,16 @@ export const checkPaymentStatus = async (req, res) => {
       }
     }
 
+    // Handle Revolut API response structure (order_amount.value instead of amount)
+    const orderAmount = order.order_amount || {};
+    
     res.json({
       success: true,
       order: {
         id: order.id,
         state: order.state,
-        amount: order.amount,
-        currency: order.currency
+        amount: orderAmount.value || 0,
+        currency: orderAmount.currency || 'GBP'
       },
       user: {
         isPaid: user.isPaid,

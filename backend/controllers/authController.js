@@ -84,9 +84,31 @@ export const login = async (req, res) => {
       });
     }
 
+    // Check if password field exists and is a valid hash
+    if (!user.password) {
+      console.error(`[Login] User ${user._id} has no password field`);
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid credentials'
+      });
+    }
+
     // Check password
-    const isPasswordValid = await bcrypt.compare(password, user.password);
+    let isPasswordValid = false;
+    try {
+      isPasswordValid = await bcrypt.compare(password, user.password);
+    } catch (error) {
+      console.error('[Login] Error comparing password:', error.message);
+      console.error('[Login] Password field type:', typeof user.password);
+      console.error('[Login] Password field length:', user.password?.length);
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid credentials'
+      });
+    }
+
     if (!isPasswordValid) {
+      console.log(`[Login] Password mismatch for user ${user.email}`);
       return res.status(401).json({
         success: false,
         message: 'Invalid credentials'
