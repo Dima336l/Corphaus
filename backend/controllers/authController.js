@@ -38,6 +38,7 @@ export const signup = async (req, res) => {
       businessName: role === 'business' ? businessName : undefined,
       isPaid: false,
       subscriptionPlan: 'free',
+      subscriptionStatus: 'expired',
       isVerified: true,
       isActive: true,
     });
@@ -201,6 +202,7 @@ export const upgradeToPaid = async (req, res) => {
       // Update subscription (development/testing only)
       user.isPaid = true;
       user.subscriptionPlan = 'pro';
+      user.subscriptionStatus = 'active';
       user.subscriptionStartDate = new Date();
       user.subscriptionEndDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
       

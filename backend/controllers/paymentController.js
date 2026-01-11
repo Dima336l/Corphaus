@@ -64,7 +64,13 @@ export const createPaymentOrder = async (req, res) => {
       });
     }
 
-    if (user.isPaid && user.subscriptionEndDate > new Date()) {
+    // Check if user has an active subscription
+    const hasActive = user.isPaid && 
+      user.subscriptionStatus === 'active' && 
+      user.subscriptionEndDate && 
+      user.subscriptionEndDate > new Date();
+    
+    if (hasActive) {
       return res.status(400).json({
         success: false,
         message: 'User already has an active subscription'
@@ -216,39 +222,53 @@ const handlePaymentSuccess = async (event) => {
     }
 
     // Find user by order ID
-    const user = await User.findOne({ revolutOrderId: orderId });
+    let user = await User.findOne({ revolutOrderId: orderId });
     
     if (!user) {
       console.error('User not found for order ID:', orderId);
       // Try to find by metadata if available
       const metadataUserId = order.metadata?.user_id || event.metadata?.user_id;
       if (metadataUserId) {
-        const userByMetadata = await User.findById(metadataUserId);
-        if (userByMetadata) {
-          userByMetadata.revolutOrderId = orderId;
-          userByMetadata.isPaid = true;
-          userByMetadata.subscriptionPlan = 'pro';
-          userByMetadata.subscriptionStartDate = new Date();
-          userByMetadata.subscriptionEndDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
-          userByMetadata.revolutPaymentId = order.payments?.[0]?.id || orderId;
-          await userByMetadata.save();
-          console.log(`Subscription activated for user ${userByMetadata._id} (found via metadata)`);
-          return;
+        user = await User.findById(metadataUserId);
+        if (user) {
+          user.revolutOrderId = orderId;
+          console.log(`User found via metadata for order ${orderId}`);
         }
       }
-      return;
+      
+      if (!user) {
+        console.error('User not found for order ID:', orderId);
+        return;
+      }
     }
+
+    // Check if this is a renewal or new subscription
+    const isRenewal = user.isPaid && user.subscriptionEndDate && user.subscriptionEndDate > new Date();
+    const now = new Date();
+    const oneMonthFromNow = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000); // 30 days
 
     // Update user subscription
     user.isPaid = true;
     user.subscriptionPlan = 'pro';
-    user.subscriptionStartDate = new Date();
-    user.subscriptionEndDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
+    user.subscriptionStatus = 'active';
+    
+    if (isRenewal) {
+      // Extend existing subscription by 30 days from current end date
+      user.subscriptionEndDate = new Date(user.subscriptionEndDate.getTime() + 30 * 24 * 60 * 60 * 1000);
+      console.log(`Subscription renewed for user ${user._id}, extended to ${user.subscriptionEndDate}`);
+    } else {
+      // New subscription - start from now
+      user.subscriptionStartDate = now;
+      user.subscriptionEndDate = oneMonthFromNow;
+      user.subscriptionCancelAt = null; // Clear any pending cancellation
+      console.log(`New subscription activated for user ${user._id}, expires ${user.subscriptionEndDate}`);
+    }
+    
     user.revolutPaymentId = order.payments?.[0]?.id || order.payment_id || orderId;
     
     await user.save();
 
-    console.log(`Subscription activated for user ${user._id}`);
+    console.log(`Payment processed for user ${user._id} - Subscription ${isRenewal ? 'renewed' : 'activated'}`);
   } catch (error) {
     console.error('Error handling payment success:', error);
     throw error;
@@ -320,11 +340,23 @@ export const checkPaymentStatus = async (req, res) => {
 
     // If order is completed, update user subscription
     if (order.state === 'COMPLETED' || order.state === 'AUTHORISED') {
-      if (!user.isPaid || user.subscriptionEndDate < new Date()) {
+      const isRenewal = user.isPaid && user.subscriptionEndDate && user.subscriptionEndDate > new Date();
+      const now = new Date();
+      
+      if (!user.isPaid || user.subscriptionEndDate < new Date() || isRenewal) {
         user.isPaid = true;
         user.subscriptionPlan = 'pro';
-        user.subscriptionStartDate = new Date();
-        user.subscriptionEndDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+        user.subscriptionStatus = 'active';
+        
+        if (isRenewal) {
+          // Extend existing subscription
+          user.subscriptionEndDate = new Date(user.subscriptionEndDate.getTime() + 30 * 24 * 60 * 60 * 1000);
+        } else {
+          // New subscription
+          user.subscriptionStartDate = now;
+          user.subscriptionEndDate = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+        }
+        
         user.revolutPaymentId = order.payments?.[0]?.id || orderId;
         await user.save();
       }
@@ -344,6 +376,8 @@ export const checkPaymentStatus = async (req, res) => {
       user: {
         isPaid: user.isPaid,
         subscriptionPlan: user.subscriptionPlan,
+        subscriptionStatus: user.subscriptionStatus,
+        subscriptionStartDate: user.subscriptionStartDate,
         subscriptionEndDate: user.subscriptionEndDate
       }
     });
@@ -352,6 +386,104 @@ export const checkPaymentStatus = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error checking payment status',
+      error: error.message
+    });
+  }
+};
+
+// @desc    Cancel subscription
+// @route   POST /api/payments/cancel-subscription
+// @access  Private
+export const cancelSubscription = async (req, res) => {
+  try {
+    const user = await User.findById(req.userId);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Check if user has an active subscription
+    const hasActive = user.isPaid && 
+      user.subscriptionStatus === 'active' && 
+      user.subscriptionEndDate && 
+      user.subscriptionEndDate > new Date();
+
+    if (!hasActive) {
+      return res.status(400).json({
+        success: false,
+        message: 'No active subscription to cancel'
+      });
+    }
+
+    // Set cancellation at end of current billing period
+    user.subscriptionCancelAt = user.subscriptionEndDate;
+    user.subscriptionStatus = 'cancelled';
+    
+    await user.save();
+
+    res.json({
+      success: true,
+      message: 'Subscription cancelled successfully. Your subscription will remain active until the end of your billing period.',
+      subscription: {
+        status: user.subscriptionStatus,
+        endDate: user.subscriptionEndDate,
+        cancelAt: user.subscriptionCancelAt
+      }
+    });
+  } catch (error) {
+    console.error('Error cancelling subscription:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error cancelling subscription',
+      error: error.message
+    });
+  }
+};
+
+// @desc    Reactivate subscription
+// @route   POST /api/payments/reactivate-subscription
+// @access  Private
+export const reactivateSubscription = async (req, res) => {
+  try {
+    const user = await User.findById(req.userId);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Check if subscription is cancelled but still active
+    if (user.subscriptionStatus !== 'cancelled' || !user.subscriptionEndDate || user.subscriptionEndDate < new Date()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Cannot reactivate. Please create a new subscription.'
+      });
+    }
+
+    // Reactivate subscription
+    user.subscriptionStatus = 'active';
+    user.subscriptionCancelAt = null;
+    
+    await user.save();
+
+    res.json({
+      success: true,
+      message: 'Subscription reactivated successfully.',
+      subscription: {
+        status: user.subscriptionStatus,
+        endDate: user.subscriptionEndDate
+      }
+    });
+  } catch (error) {
+    console.error('Error reactivating subscription:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error reactivating subscription',
       error: error.message
     });
   }

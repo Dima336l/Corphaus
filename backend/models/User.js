@@ -36,11 +36,19 @@ const userSchema = new mongoose.Schema({
     enum: ['free', 'pro'],
     default: 'free'
   },
+  subscriptionStatus: {
+    type: String,
+    enum: ['active', 'cancelled', 'expired'],
+    default: 'expired'
+  },
   subscriptionStartDate: {
     type: Date
   },
   subscriptionEndDate: {
     type: Date
+  },
+  subscriptionCancelAt: {
+    type: Date // When subscription will be cancelled (end of billing period)
   },
   
   // Revolut Payment Integration
@@ -104,9 +112,23 @@ userSchema.index({ role: 1 });
 
 // Virtual for checking free plan limits
 userSchema.virtual('canPostMore').get(function() {
-  if (this.isPaid) return true;
+  // Check if user has active subscription (paid and not expired/cancelled)
+  const hasActiveSubscription = this.isPaid && 
+    this.subscriptionStatus === 'active' && 
+    this.subscriptionEndDate && 
+    this.subscriptionEndDate > new Date();
+  
+  if (hasActiveSubscription) return true;
   return this.listingsCount < 1; // Free users can post 1 listing
 });
+
+// Method to check if subscription is active
+userSchema.methods.hasActiveSubscription = function() {
+  return this.isPaid && 
+    this.subscriptionStatus === 'active' && 
+    this.subscriptionEndDate && 
+    this.subscriptionEndDate > new Date();
+};
 
 const User = mongoose.model('User', userSchema);
 
